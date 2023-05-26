@@ -1,0 +1,16 @@
+menu "LCD Driver Configuration"
+
+    choice LCD_TYPE
+        prompt "LCD module type"
+        default TTGO
+        help
+            The type of LCD on the evaluation board.
+
+        config TTGO
+            bool "TTGO board"
+        config WROOM
+            bool "WROOM-32 board"
+    endchoice
+
+
+endmenu
