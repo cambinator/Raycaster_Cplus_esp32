@@ -47,22 +47,37 @@ void door_t::update()
 
 
 /****************** TEXTURES **************/
-void texture_t::create_from_file(const char* filename, const uint8_t width, const uint8_t height)
+void texture_t::create_from_file(const char *fname)
 {
-	_width = width;
-	_height = height;
-	_buffer = (color16_t*)heap_caps_malloc(height * width * PIXEL_SIZE, MALLOC_CAP_DMA);
-	if (_buffer == nullptr) {
-		puts("texture_t: cannot allocate memory");
+	int bytes_read = 0;
+	char img_size[2];
+	FILE* file = nullptr;
+	if (fname){
+		file = fopen(fname, "r");
+		if (file == nullptr){
+			printf("texture_t::create: cannot open file: %s\n", fname);
+			return;
+		}
+		bytes_read = fread(img_size, 1, 2, file);
+		if (bytes_read != 2){
+			printf("texture_t::create: empty file %s\n", fname);
+		}
+		//printf("file %s sizes - width %u, height %u\n", fname, img_size[0], img_size[1]); /* debug */
+		_width = img_size[0];
+		_height = img_size[1];
+		uint32_t file_size = _width * _height * sizeof(color16_t);
+		_buffer = (color16_t*)heap_caps_malloc(file_size, MALLOC_CAP_DMA);
+		bytes_read = fread(_buffer, 1, file_size, file);
+		if (bytes_read != file_size){
+			printf("texture_t::create: wrong file or image side size - %d not %lu\n", bytes_read, file_size);
+			fclose(file);
+			return;
+		}
+	} else {
+		puts("texture_t::create: empty filename");
 		return;
 	}
-	int err = iRead_File_To_Buf((uint8_t*)_buffer, filename, width, height, PIXEL_SIZE);
-	if (err){
-		puts("texture_t: error reading file");
-		delete _buffer;
-		return;
-	}
-	return;
+	fclose(file);
 }
 
 color16_t texture_t::get_pixel(uint8_t x, uint8_t y) const
@@ -96,23 +111,23 @@ void texture_t::textures_load(texture_t *textures[], int num)
 		textures[i] = new texture_t;
 	}	
 	/* solid objects	 */
-	textures[0]->create_from_file("/spiffs/onyx_16b.bin", 64, 64);
-	textures[1]->create_from_file("/spiffs/concrete_16b.bin", 64, 64);
-	textures[2]->create_from_file("/spiffs/iron_16b.bin", 64, 64);
-	textures[3]->create_from_file("/spiffs/stone2_16b.bin", 64, 64);
-	textures[4]->create_from_file("/spiffs/stone1_16b.bin", 64, 64);
-	textures[5]->create_from_file("/spiffs/brick2_16b.bin", 64, 64);
-	textures[6]->create_from_file("/spiffs/wood_16b.bin", 64, 64);
-	textures[7]->create_from_file("/spiffs/door_16b.bin", 64, 64);
+	textures[0]->create_from_file("/spiffs/onyx_16b.bin");
+	textures[1]->create_from_file("/spiffs/concrete_16b.bin");
+	textures[2]->create_from_file("/spiffs/iron_16b.bin");
+	textures[3]->create_from_file("/spiffs/stone2_16b.bin");
+	textures[4]->create_from_file("/spiffs/stone1_16b.bin");
+	textures[5]->create_from_file("/spiffs/brick2_16b.bin");
+	textures[6]->create_from_file("/spiffs/wood_16b.bin");
+	textures[7]->create_from_file("/spiffs/door_16b.bin");
 	/* dynamic objects */
-	textures[8]->create_from_file("/spiffs/zombie_16b.bin", 64, 64);
-	textures[9]->create_from_file("/spiffs/scorpion_16b.bin", 64, 64);
-	textures[10]->create_from_file("/spiffs/heart_16b.bin", 16, 16);
-	textures[11]->create_from_file("/spiffs/fireball_16b.bin", 16, 16);
-	textures[12]->create_from_file("/spiffs/bullets_16b.bin", 32, 32);
-	textures[13]->create_from_file("/spiffs/barrel_16b.bin", 64, 64);
-	textures[14]->create_from_file("/spiffs/lamp1_16b.bin", 64, 64);
-	textures[15]->create_from_file("/spiffs/burer64_16b.bin", 64, 64);
+	textures[8]->create_from_file("/spiffs/zombie_16b.bin");
+	textures[9]->create_from_file("/spiffs/scorpion_16b.bin");
+	textures[10]->create_from_file("/spiffs/heart_16b.bin");
+	textures[11]->create_from_file("/spiffs/fireball_16b.bin");
+	textures[12]->create_from_file("/spiffs/ammo_16b.bin");
+	textures[13]->create_from_file("/spiffs/barrel_16b.bin");
+	textures[14]->create_from_file("/spiffs/lamp1_16b.bin");
+	textures[15]->create_from_file("/spiffs/burer64_16b.bin");
 }
 
 /* red bricks */
@@ -155,14 +170,11 @@ void texture_t::Generate_Tex_3(color16_t* tex, const uint8_t tex_w, const uint8_
 	}
 }
 
-
 /*************** SPRITE ****************/
-void sprite_t::create_from_file(const char* filename, const uint8_t width, const uint8_t height)
+void sprite_t::create_from_file(const char *filename)
 {
-	_width = width;
-	_height = height;
 	_texture = new texture_t;
-	_texture->create_from_file(filename, width, height);
+	_texture->create_from_file(filename);
 }
 void sprite_t::move(uint16_t x, uint16_t y)
 {
@@ -172,15 +184,15 @@ void sprite_t::move(uint16_t x, uint16_t y)
 
 void sprite_t::copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height)
 {
-	if (b_width < _width || b_height < _height){
+	if (b_width < width() || b_height < height()){
 		puts("Sprite_Copy_To_Buffer: sprite is too big");
 		return;
 	}
-	uint32_t row_width = _width;
+	uint32_t row_width = width();
 	uint32_t buf_ind = (_position.y * b_width + _position.x);		
-	for (uint8_t j = 0; j != _height; ++j){
-		row_width = _width;
-		for (uint8_t i = 0; i != _width; ++i) {		
+	for (uint8_t j = 0; j != height(); ++j){
+		row_width = width();
+		for (uint8_t i = 0; i != width(); ++i) {		
 			color16_t color = _texture->get_pixel(i, j);
 			if (!iCompare_Colors(&color, &cBLACK)){
 				buff[buf_ind] = _texture->get_pixel(i, j);
@@ -203,7 +215,7 @@ void sprite_t::draw(device_tft tft)
 	if (tft == nullptr || _texture == nullptr){
 		return;	
 	}
-	vSend_Frame(tft, _position.x, _position.y, _width, _height, (uint8_t*)_texture->buffer()); 
+	vSend_Frame(tft, _position.x, _position.y, _texture->width(), _texture->height(), (uint8_t*)_texture->buffer()); 
 }
 
 
@@ -212,17 +224,17 @@ player_t::player_t()
 {
 	/* a picture of the gun in the center of the screen */
 	sprites[GUN] = new sprite_t;
-	sprites[GUN]->create_from_file("/spiffs/gun_16b.bin", 50, 50);
+	sprites[GUN]->create_from_file("/spiffs/gun_new_16b.bin");
 	sprites[GUN]->move(105, lcd_height - sprites[GUN]->height() - 1);
 	/* blood on the screen, appears when the player receives damage */
 	sprites[BLOOD] = new sprite_t;
-	sprites[BLOOD]->create_from_file("/spiffs/blood_16b.bin", 64, 64);
+	sprites[BLOOD]->create_from_file("/spiffs/blood_16b.bin");
 	sprites[BLOOD]->move(90, (lcd_height - sprites[BLOOD]->height()) / 2);
 	sprites[KNIFE1] = new sprite_t;
-	sprites[KNIFE1]->create_from_file("/spiffs/knife_16b.bin", 64, 64);
+	sprites[KNIFE1]->create_from_file("/spiffs/knife_16b.bin");
 	sprites[KNIFE1]->move(50, lcd_height - sprites[KNIFE1]->height() - 1);
 	sprites[KNIFE2] = new sprite_t;
-	sprites[KNIFE2]->create_from_file("/spiffs/knife2_16b.bin", 64, 64);
+	sprites[KNIFE2]->create_from_file("/spiffs/knife2_16b.bin");
 	sprites[KNIFE2]->move(80, lcd_height - sprites[KNIFE2]->height() - 2);
 }
 

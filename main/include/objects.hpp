@@ -113,7 +113,7 @@ public:
 	color16_t get_pixel(uint8_t x, uint8_t y) const;
 	color16_t get_pixel_normalized(float x, float y) const;
 	void create_generated(const uint8_t width, const uint8_t height, texture_t_generator_fn);
-	void create_from_file(const char* filename, const uint8_t width, const uint8_t height);
+	void create_from_file(const char* filename);
 	static void textures_load(texture_t* textures[], int num);
 	static void Generate_Tex_1(color16_t* tex, const uint8_t tex_w, const uint8_t tex_h);
 	static void Generate_Tex_2(color16_t* tex, const uint8_t tex_w, const uint8_t tex_h);
@@ -127,13 +127,11 @@ class sprite_t{
 private:
 	texture_t* _texture = nullptr;
 	point_u _position = {0, 0};
-	uint8_t _width = 0;				/* max 255 */
-	uint8_t _height = 0;				/* max 255 */
 public:
 	sprite_t() {}
-	sprite_t(const char* filename, const uint8_t width, const uint8_t height)
+	explicit sprite_t(const char* filename)
 	{
-		create_from_file(filename, width, height);
+		create_from_file(filename);
 	}
 	~sprite_t()
 	{
@@ -145,13 +143,13 @@ public:
 	}
 	uint8_t width() const
 	{
-		return _width;
+		return _texture->width();
 	}
 	uint8_t height() const
 	{
-		return _height;
+		return _texture->height();
 	}
-	void create_from_file(const char* filename, const uint8_t width, const uint8_t height);
+	void create_from_file(const char* filename);
 	void move(uint16_t x, uint16_t y);
 	void copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height);
 	void draw(device_tft tft);
