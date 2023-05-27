@@ -213,7 +213,7 @@ void vSend_Rect(device_tft tft, uint16_t xpos, uint16_t ypos, uint16_t width, ui
 
 void vSend_Filled_Rect(device_tft tft, uint16_t xpos, uint16_t ypos, uint16_t width, uint16_t height, const color16_t* color)
 {
-	if (ypos > lcd_height || xpos > lcd_width){
+	if (ypos > lcd_height || xpos > lcd_width || width == 0 || height == 0){
 		return;
 	}
 	if ((ypos + height) > lcd_height){

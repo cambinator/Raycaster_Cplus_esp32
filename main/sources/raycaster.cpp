@@ -368,13 +368,13 @@ void raycaster_t::draw_objects(list_t *objects)
 void raycaster_t::draw_player()
 {
 	if (player->weapon() == player_t::eWeapon::GUN){
-		player->sprites[0]->copy_to_buffer(screen_buffer, screen_width, screen_height);
+		player->images[0]->copy_to_buffer(screen_buffer, screen_width, screen_height);
 	}
 	else{
 	 	if (player->action() == player_t::eAction::ATTACK){
-	 		player->sprites[player_t::eSprite::KNIFE2]->copy_to_buffer(screen_buffer, screen_width, screen_height);
+	 		player->images[player_t::eSprite::KNIFE2]->copy_to_buffer(screen_buffer, screen_width, screen_height);
 	 	} else{
-	 		player->sprites[player_t::eSprite::KNIFE1]->copy_to_buffer(screen_buffer, screen_width, screen_height);
+	 		player->images[player_t::eSprite::KNIFE1]->copy_to_buffer(screen_buffer, screen_width, screen_height);
 		}
 	}		
 	/*********** player's health bar ************/
@@ -394,7 +394,7 @@ void raycaster_t::draw_player()
 	
 	/* blood */
 	if (player->state() == player_t::eState::DAMAGED){											
-		player->sprites[player_t::eSprite::BLOOD]->copy_to_buffer(screen_buffer, screen_width, screen_height); 
+		player->images[player_t::eSprite::BLOOD]->copy_to_buffer(screen_buffer, screen_width, screen_height); 
 	}
 }
 

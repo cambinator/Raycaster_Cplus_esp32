@@ -55,7 +55,7 @@ class door_t{
 public:
 	enum class eState : uint8_t{OPEN, OPENING, CLOSING, CLOSED};
 private:
-    point_u pos;
+    point_t pos;
     eState _state;
 	uint8_t _timer;
 public:
@@ -75,7 +75,7 @@ public:
     { 
         return _state;
     }
-    const point_u& position() const 
+    const point_t& position() const 
     {
         return pos;
     }
@@ -122,22 +122,22 @@ public:
 
 
 
-/**************** SPRITE *********************/
-class sprite_t{
+/**************** IMAGE *********************/
+class image_t{
 private:
 	texture_t* _texture = nullptr;
-	point_u _position = {0, 0};
+	point_t _position = {0, 0};
 public:
-	sprite_t() {}
-	explicit sprite_t(const char* filename)
+	image_t() {}
+	explicit image_t(const char* filename)
 	{
 		create_from_file(filename);
 	}
-	~sprite_t()
+	~image_t()
 	{
 		delete _texture;
 	}
-	const point_u& position() const
+	const point_t& position() const
 	{
 		return _position;
 	}
@@ -186,7 +186,7 @@ private:
 	eWeapon _weapon = eWeapon::GUN;
 	int8_t _pistol_shift = 1;
 public:
-	sprite_t* sprites[COUNT];
+	image_t* images[COUNT];
 public:
 	player_t();
 	~player_t();

@@ -170,22 +170,22 @@ void texture_t::Generate_Tex_3(color16_t* tex, const uint8_t tex_w, const uint8_
 	}
 }
 
-/*************** SPRITE ****************/
-void sprite_t::create_from_file(const char *filename)
+/*************** IMAGE ****************/
+void image_t::create_from_file(const char *filename)
 {
 	_texture = new texture_t;
 	_texture->create_from_file(filename);
 }
-void sprite_t::move(uint16_t x, uint16_t y)
+void image_t::move(uint16_t x, uint16_t y)
 {
 	_position.x = x;
 	_position.y = y;
 }
 
-void sprite_t::copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height)
+void image_t::copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height)
 {
 	if (b_width < width() || b_height < height()){
-		puts("Sprite_Copy_To_Buffer: sprite is too big");
+		puts("Sprite_Copy_To_Buffer: image is too big");
 		return;
 	}
 	uint32_t row_width = width();
@@ -210,7 +210,7 @@ void sprite_t::copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height
 	}
 }
 
-void sprite_t::draw(device_tft tft)
+void image_t::draw(device_tft tft)
 {
 	if (tft == nullptr || _texture == nullptr){
 		return;	
@@ -223,25 +223,25 @@ void sprite_t::draw(device_tft tft)
 player_t::player_t()
 {
 	/* a picture of the gun in the center of the screen */
-	sprites[GUN] = new sprite_t;
-	sprites[GUN]->create_from_file("/spiffs/gun_new_16b.bin");
-	sprites[GUN]->move(105, lcd_height - sprites[GUN]->height() - 1);
+	images[GUN] = new image_t;
+	images[GUN]->create_from_file("/spiffs/gun_new_16b.bin");
+	images[GUN]->move(105, lcd_height - images[GUN]->height() - 1);
 	/* blood on the screen, appears when the player receives damage */
-	sprites[BLOOD] = new sprite_t;
-	sprites[BLOOD]->create_from_file("/spiffs/blood_16b.bin");
-	sprites[BLOOD]->move(90, (lcd_height - sprites[BLOOD]->height()) / 2);
-	sprites[KNIFE1] = new sprite_t;
-	sprites[KNIFE1]->create_from_file("/spiffs/knife_16b.bin");
-	sprites[KNIFE1]->move(50, lcd_height - sprites[KNIFE1]->height() - 1);
-	sprites[KNIFE2] = new sprite_t;
-	sprites[KNIFE2]->create_from_file("/spiffs/knife2_16b.bin");
-	sprites[KNIFE2]->move(80, lcd_height - sprites[KNIFE2]->height() - 2);
+	images[BLOOD] = new image_t;
+	images[BLOOD]->create_from_file("/spiffs/blood_16b.bin");
+	images[BLOOD]->move(90, (lcd_height - images[BLOOD]->height()) / 2);
+	images[KNIFE1] = new image_t;
+	images[KNIFE1]->create_from_file("/spiffs/knife_16b.bin");
+	images[KNIFE1]->move(50, lcd_height - images[KNIFE1]->height() - 1);
+	images[KNIFE2] = new image_t;
+	images[KNIFE2]->create_from_file("/spiffs/knife2_16b.bin");
+	images[KNIFE2]->move(80, lcd_height - images[KNIFE2]->height() - 2);
 }
 
 player_t::~player_t()
 {
 	for (uint8_t i = 0; i != eSprite::COUNT; ++i){
-		delete sprites[i];
+		delete images[i];
 	}
 }
 
@@ -260,7 +260,7 @@ void player_t::add_ammo(uint8_t bullets)
 
 void player_t::gun_swing()
 {
-	sprites[GUN]->move(sprites[GUN]->position().x, sprites[GUN]->position().y + _pistol_shift);
+	images[GUN]->move(images[GUN]->position().x, images[GUN]->position().y + _pistol_shift);
 	_pistol_shift = -_pistol_shift;
 }
 

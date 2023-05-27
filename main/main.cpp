@@ -105,14 +105,18 @@ extern "C" void app_main()
     /*********** Run *************/
     ESP_LOGI(TAG, "Starting..\n");
     vSet_Screen_Rotation(spi, LANDSCAPE_FLIP);
-    Start_Screen(tft);
+    {
+        start_screen_t start_screen;
+        start_screen.draw(tft);
+    }
     ESP_LOGI(TAG, "Minimal stack size = %d\n", configMINIMAL_STACK_SIZE); /*debug*/
     
     /************** Main task **************/
     int next_task = 0;
     for (;;) {
         if (next_task == 0){
-            next_task = Start_Menu(tft);
+            menu_t menu;
+            next_task = menu.loop(tft);
 		} else {
             game_t game(tft, next_task);
             next_task = game.loop();

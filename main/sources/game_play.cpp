@@ -219,9 +219,13 @@ uint8_t game_t::loop()
 	destroy();
 	/******* exit ***********/	
 	if (exit_code == 2){
-		End_Screen(tft, exit_score, &cRED, "Game over");
+		end_screen_t loose_screen(exit_score, cRED, "Game over");
+		loose_screen.draw(tft);
+
+
 	} else {
-		End_Screen(tft, exit_score, &cDARKGREEN, "You win!");
+		end_screen_t win_screen(exit_score, cDARKGREEN, "You win!");
+		win_screen.draw(tft);
 	}
 	return 0;
 }
