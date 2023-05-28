@@ -57,36 +57,6 @@ color16_t IRAM_ATTR col_tConvert_Uint8_To_Color16(uint8_t byte)
 	return color;
 }
 
-
-int iRead_File_To_Buf(uint8_t *buffer, const char *fname, uint16_t img_width, uint16_t img_height, uint8_t pix_size)
-{
-	int bytes_read = 0;
-	if (buffer == NULL) {
-		puts("iRead_File_To_Buf: buffer not available");
-		return 1;
-	}
-	FILE* file = NULL;
-	if (fname){
-		file = fopen(fname, "r");
-		if (!file){
-			printf("iRead_File_To_Buf: cannot open file: %s\n", fname);
-			return 1;
-		}
-		uint32_t file_size = img_width * img_height * pix_size;
-		bytes_read = fread(buffer, 1, file_size, file);
-		if (bytes_read != file_size){
-			printf("iRead_File_To_Buf: wrong file or image side size - %d not %lu\n", bytes_read, file_size);
-			fclose(file);
-			return 1;
-		}
-	} else {
-		puts("iRead_File_To_Buf: empty filename");
-		return 1;
-	}
-	fclose(file);
-	return 0;
-}
-
 void vSend_Line_Horizontal(device_tft tft, uint16_t xpos, uint16_t ypos, uint16_t length, const color16_t* color)
 {
 	if (xpos > lcd_width || ypos > lcd_height || length == 0){

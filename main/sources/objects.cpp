@@ -443,12 +443,44 @@ void player_t::attack(list_t *obj_list, texture_t *textures[])
 	}
 }
 
+
+/******** SPRITE **********/
+sprite_t::sprite_t(texture_t *texture, eSize size, bool transparent, bool inverted, int8_t shift) :
+	_texture(texture), _transparent(transparent), _inverted(inverted), _vert_shift(shift)
+{
+	resize(size);
+}
+
+void sprite_t::resize(eSize new_size)
+{
+	switch (new_size){
+		case SMALL:
+			_size_divider = 4;
+			break;
+		case NORMAL:
+			_size_divider = 2;
+			break;
+		case BIG:
+			_size_divider = 1;
+			break;
+		default:
+			break;
+	}
+}
+
+
 /****************** OBJECTS ********************/
 bool game_object_t::compare_distances(void *a, void *b)
 {
     game_object_t* first = (game_object_t*)a;
 	game_object_t* second = (game_object_t*)b;
 	return (first->distance() < second->distance());
+}
+
+game_object_t::game_object_t(texture_t *texture, vector_float_t position, int vert_shift, eObjType type) : 
+	_position(position), _type(type)
+{
+	_sprite = new sprite_t(texture, sprite_t::NORMAL, false, false, vert_shift);
 }
 
 void game_object_t::update_distance(player_t *player)
@@ -483,7 +515,7 @@ dynamic_t::dynamic_t(texture_t *texture, vector_float_t position, vector_float_t
 			_health = 120;
 			_damage = 4;
 			_diameter = 0.3;
-			vert_shift = 64;
+			_sprite->shift(64);
 			_friendly = false;
 			break;
 		case ZOMBIE:
@@ -491,8 +523,8 @@ dynamic_t::dynamic_t(texture_t *texture, vector_float_t position, vector_float_t
 			_health = 80;
 			_damage = 2;
 			_diameter = 0.2;
-			vert_shift = 64;
 			_friendly = false;
+			_sprite->shift(64);
 			break;
 		case BULLET:
 			_damage = 40;
@@ -507,9 +539,9 @@ dynamic_t::dynamic_t(texture_t *texture, vector_float_t position, vector_float_t
 			_health = 800;
 			_damage = 8;
 			_diameter = 0.8;
-			vert_shift = 64;
-			size_divider = 1;
 			_friendly = false;
+			_sprite->shift(64);
+			_sprite->resize(sprite_t::BIG);			
 			break;
 		default:
 			break;
@@ -540,7 +572,7 @@ int dynamic_t::update(map_t *map, list_t *objects, player_t* player)
 			_velocity.x = -_velocity.x;
 			_position.x += _velocity.x;
 			if (_type == SCORP){
-				_inverted = !_inverted;
+				_sprite->invert();
 			}
 		}
 	}	
@@ -576,7 +608,7 @@ int dynamic_t::update(map_t *map, list_t *objects, player_t* player)
 							return 1;
 						}
 					}
-				} else if (next_object->diameter() > 0.0f){
+				} else if (next_object->diameter() > 0.2f){				/* passing through small objects.. */
 					_velocity.x = -_velocity.x;
 					_velocity.y = -_velocity.y;
 				}
@@ -586,7 +618,7 @@ int dynamic_t::update(map_t *map, list_t *objects, player_t* player)
 	_timer++;
 	if (_timer > 16 && _type == ZOMBIE){
 		_timer = 0;
-		_inverted = !_inverted;
+		_sprite->invert();
 		const float chase_radius = 9.0f;
 		const float speed = 0.03f;
 		if (_distance < chase_radius && _distance > 0.1f){
@@ -611,7 +643,7 @@ int dynamic_t::update(map_t *map, list_t *objects, player_t* player)
 	}
 	if (_timer > 16 && _type == BOSS){
 		_timer = 0;
-		_inverted = !_inverted;
+		_sprite->invert();
 		const float chase_radius = 6.0f;
 		const float speed = 0.05f;
 		if (_distance < chase_radius && _distance > 0.1f){
@@ -661,28 +693,28 @@ static_t::static_t(texture_t *texture, vector_float_t position, eObjType type):
 	switch(type){
 		case HEALTH:
 			_diameter = 0.2f;
-			vert_shift = 32;
-			size_divider = 4;
+			_sprite->shift(32);
+			_sprite->resize(sprite_t::SMALL);
 			break;
 		case AMMO:
 			_diameter = 0.2f;
-			vert_shift = 64;
-			size_divider = 4;
+			_sprite->shift(64);
+			_sprite->resize(sprite_t::SMALL);
 			break;
 		case BARREL:
 			_diameter = 0.6f;
-			vert_shift = 96;  
-			size_divider = 2;
+			_sprite->shift(96);
+			_sprite->resize(sprite_t::NORMAL);
 			break;
 		case LAMP:
 			_diameter = 0.0f;
-			vert_shift = -96;				/* shift up */
-			size_divider = 4;
+			_sprite->shift(-96);
+			_sprite->resize(sprite_t::SMALL);
 			break;
 		default:
 			_diameter = 0.0f;
-			vert_shift = 64;
-			size_divider = 2;
+			_sprite->shift(64);
+			_sprite->resize(sprite_t::NORMAL);
 			break;
 	}
 }
@@ -733,4 +765,4 @@ void game_scene_update(player_t* player, map_t* map, list_t *objects, list_t* do
 		door->update();
 	}	
 }
-	
+

@@ -49,9 +49,6 @@ extern font_t current_font;  /* Current font structure */
 
 color16_t col_tConvert_Uint8_To_Color16(uint8_t byte);
 
-/* reading file and saving as 8bit color buffer */
-int iRead_File_To_Buf(uint8_t *buffer, const char *fname, uint16_t img_width, uint16_t img_height, uint8_t pix_size);
-
 void vSend_Line_Horizontal(device_tft tft, uint16_t xpos, uint16_t ypos, uint16_t length, const color16_t* color);
 
 void vSend_Line_Vertical(device_tft tft, uint16_t xpos, uint16_t ypos, uint16_t length, const color16_t* color);

@@ -296,14 +296,14 @@ void raycaster_t::draw_objects(list_t *objects)
 
 	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
 		game_object_t* obj = (game_object_t*)*iter;
-		if (obj->texture != nullptr){
+		if (obj->sprite()->texture() != nullptr){
 			float rel_pos_x = obj->position().x - player->position().x;
 			float rel_pos_y = obj->position().y - player->position().y;
 			float transform_x = inv_determinant * (player->direction().y * rel_pos_x - player->direction().x * rel_pos_y);
 			float transform_y = inv_determinant * (-player->camera_vec().y * rel_pos_x + player->camera_vec().x * rel_pos_y);		
-			int v_screen_shift = (int)(((float)obj->vert_shift + player->height()) / transform_y) + pitch;
+			int v_screen_shift = (int)(((float)obj->sprite()->vert_shift() + player->height()) / transform_y) + pitch;
 			int obj_screen_x = (int)( (screen_width / 2) * (1.0f + transform_x / transform_y));
-			int obj_height = abs(2 * (int)(screen_height / transform_y)) / obj->size_divider;
+			int obj_height = abs(2 * (int)(screen_height / transform_y)) / obj->sprite()->size_divider();
 			int draw_start_y = -obj_height / 2 + screen_height / 2 + v_screen_shift;
 			if (draw_start_y < 0) {
 				draw_start_y = 0;
@@ -312,7 +312,7 @@ void raycaster_t::draw_objects(list_t *objects)
 			if(draw_end_y >= screen_height) {
 				draw_end_y = screen_height - 1;
 			}		
-			int obj_width = abs(2 * (int) (screen_height / (transform_y))) / obj->size_divider;
+			int obj_width = abs(2 * (int) (screen_height / (transform_y))) / obj->sprite()->size_divider();
 			int draw_start_x = -obj_width / 2 + obj_screen_x;
 			if(draw_start_x < 0) {
 				draw_start_x = 0;
@@ -324,14 +324,14 @@ void raycaster_t::draw_objects(list_t *objects)
 			/* adding health bar */
 			int health_bar = 0;
 			if((!obj->is_friendly()) && (obj->health() != obj->max_health())){
-				health_bar = (obj->health() * obj->texture->width()) / obj->max_health();
+				health_bar = (obj->health() * obj->sprite()->texture()->width()) / obj->max_health();
 			}
 			/* draw vertical lines */ 
 			for(int x = draw_start_x; x < draw_end_x; x++)	{
-				int tex_x = (int)(256 * (x - (-obj_width / 2 + obj_screen_x)) * obj->texture->width() / obj_width) / 256;
+				int tex_x = (int)(256 * (x - (-obj_width / 2 + obj_screen_x)) * obj->sprite()->texture()->width() / obj_width) / 256;
 				int health_x = tex_x;
-				if (obj->inverted()){
-					tex_x = obj->texture->width() - tex_x;
+				if (obj->sprite()->is_inverted()){
+					tex_x = obj->sprite()->texture()->width() - tex_x;
 				}
 				/* the conditions in the if are: */
 				/* 1) it's in front of camera plane so you don't see things behind you */
@@ -342,12 +342,12 @@ void raycaster_t::draw_objects(list_t *objects)
 					int buf_ptr = draw_start_y * screen_width + x;				
 					for(int y = draw_start_y; y < draw_end_y; y++) { 								/* for every pixel of the current x */
 						int d = (y - v_screen_shift) * 256 - screen_height * 128 + obj_height * 128;	/* 256 and 128 factors to avoid floats */
-						int tex_y = ((d * obj->texture->height()) / obj_height) / 256;
-						color16_t obj_color = obj->texture->get_pixel(tex_x, tex_y);				/* get current color from the texture */
+						int tex_y = ((d * obj->sprite()->texture()->height()) / obj_height) / 256;
+						color16_t obj_color = obj->sprite()->texture()->get_pixel(tex_x, tex_y);				/* get current color from the texture */
 						if (tex_y == 0 && health_x < health_bar){									/* health bar */
 							screen_buffer[buf_ptr] = cRED;
 						} else if (!iCompare_Colors(&obj_color, &cBLACK)){							/*  cBLACK is considered transparent */
-							if (obj->transparent()){
+							if (obj->sprite()->is_transparent()){
 								obj_color = Color_Mix(screen_buffer[buf_ptr], obj_color);
 							} 
 							if (player_tile == FOG || player_tile == LAMP){

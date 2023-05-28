@@ -255,28 +255,66 @@ public:
 	void attack(list_t* obj_list, texture_t* textures[]);
 };
 
+
+/********* sprite **********/
+class sprite_t{
+public:
+	enum eSize : uint8_t {SMALL, NORMAL, BIG};
+private:
+	texture_t* _texture;
+	bool _transparent;
+	bool _inverted;
+	int8_t _vert_shift;
+	uint8_t _size_divider;
+public:
+	explicit sprite_t(texture_t* texture, eSize size = NORMAL, bool transparent = false, bool inverted = false, int8_t shift = 0);
+	void invert()
+	{
+		_inverted = !_inverted;
+	}
+	void shift(int8_t new_shift)
+	{
+		_vert_shift = new_shift;
+	}
+	bool is_transparent() const
+	{
+		return _transparent;
+	}
+	bool is_inverted() const
+	{
+		return _inverted;
+	}
+	int8_t vert_shift() const
+	{
+		return _vert_shift;
+	}
+	uint8_t size_divider() const
+	{
+		return _size_divider;
+	}
+	const texture_t* texture () const
+	{
+		return _texture;
+	}
+	void resize(eSize new_size);
+};
+
 /****************** OBJECTS ********************/
 class game_object_t{
-	friend class raycaster_t;
 protected:
-	texture_t* texture = nullptr;
+	sprite_t* _sprite;
 	vector_float_t _position = {0.0f, 0.0f};
 	float _distance = INFINITY_;
 	float _diameter = 0.0f;
 	int16_t _max_health = 2000;
 	int16_t _health = 2000;
 	eObjType _type;
-	bool _to_remove = false;
-	bool _transparent = false;
-	bool _inverted = false;
 	uint8_t _damage = 0;
 	bool _friendly = true;
-	int8_t vert_shift = 0;
-	uint8_t size_divider = 2;
+	bool _to_remove = false;
 public:
 	game_object_t() {}
-	game_object_t(texture_t* texture, vector_float_t position, int vert_shift, eObjType type) : 
-		texture(texture), _position(position), _type(type), vert_shift(vert_shift) {}
+	game_object_t(texture_t* texture, vector_float_t position, int vert_shift, eObjType type);
 	virtual ~game_object_t() {}
 	const vector_float_t& position() const
 	{
@@ -293,14 +331,6 @@ public:
 	float diameter() const
 	{
 		return _diameter;
-	}
-	bool inverted() const
-	{
-		return _inverted;
-	}
-	bool transparent() const
-	{
-		return _transparent;
 	}
 	eObjType type() const
 	{
@@ -326,6 +356,10 @@ public:
 	{
 		_to_remove = true;
 	}
+	const sprite_t* sprite() const
+	{
+		return _sprite;
+	}
 	void update_distance(player_t* player);
 	static bool compare_distances(void* a, void* b);
 	static void clean_objects_list(list_t* objects_list);
@@ -342,7 +376,10 @@ private:
 	uint8_t _timer = 0;
 public:
 	dynamic_t(texture_t* texture, vector_float_t position, vector_float_t velocity, int v_shift, eObjType type);
-	~dynamic_t(){}
+	~dynamic_t()
+	{
+		delete _sprite;
+	}
 	int update(map_t* map, list_t* objects, player_t* player);
 	bool on_interact(player_t* player) override;
 	bool collide(game_object_t* obj);
@@ -352,7 +389,10 @@ public:
 class static_t : public game_object_t{
 public: 
 	static_t(texture_t* texture, vector_float_t position, eObjType type);
-	~static_t(){}
+	~static_t()
+	{
+		delete _sprite;
+	}
 	int update(map_t* map, list_t* objects, player_t* player) { return 0; }
 	bool on_interact(player_t* player) override;
 	bool collide(game_object_t* obj) { return false;}
