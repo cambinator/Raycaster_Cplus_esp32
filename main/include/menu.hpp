@@ -8,9 +8,6 @@
 #include "Lcd_Simple_Graphics.h"
 #include "objects.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern button button_2;  /* move left / enter game */
 extern button button_6;  /* shoot / choose game */
@@ -127,9 +124,3 @@ public:
     ~menu_t();
     uint8_t loop(device_tft tft);
 };
-
-
-
-#ifdef __cplusplus
-}
-#endif

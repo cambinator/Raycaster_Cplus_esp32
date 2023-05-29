@@ -2,8 +2,6 @@
 
 #include <math.h>
 #include "esp_heap_caps.h"
-#include "Lcd_Simple_Driver.h"
-#include "Lcd_Simple_Graphics.h"
 #include "types.hpp"
 #include "my_list.hpp"
 #include "map.hpp"

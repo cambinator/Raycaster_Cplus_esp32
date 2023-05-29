@@ -18,10 +18,6 @@
 #include "textures.hpp"
 #include "player.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern button button_1;  /* move left / enter game */
 extern button button_2;  /* move forward/backward */
 extern button button_3;  /* move right */
@@ -45,7 +41,3 @@ public:
 	uint8_t loop();
 	void destroy();
 };
-
-#ifdef __cplusplus
-}
-#endif

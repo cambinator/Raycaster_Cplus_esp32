@@ -11,12 +11,12 @@ uint8_t map_t::get_index(uint16_t x, uint16_t y) const
 
 bool map_t::is_solid(uint8_t tile)
 {
-	return (tile >= eObjType::SOLID_START && tile <= eObjType::SOLID_END);
+	return (tile >= eMapCellType::SOLID_START && tile <= eMapCellType::SOLID_END);
 }
 
 bool map_t::is_door(uint8_t tile)
 {
-	return (tile == eObjType::DOOR_H || tile == eObjType::DOOR_V);
+	return (tile == eMapCellType::DOOR_H || tile == eMapCellType::DOOR_V);
 }
 
 map_t *map_t::load_map(uint8_t level)

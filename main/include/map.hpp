@@ -24,6 +24,11 @@ extern const uint8_t map5_width;
 extern const uint8_t map5_height;
 extern const uint8_t map5[];
 
+
+/* numbers on the map */
+enum eMapCellType : uint8_t {NONE = 0, ZOMBIE = 1, SCORP = 2, HEALTH = 3, AMMO = 4, BARREL = 5, LAMP = 6, BOSS = 7,
+	PORTAL = 8,	SOLID_START = 9, SOLID_END = 14, DOOR_V = 15, DOOR_H = 16, FOG = 19, DARK = 20};		/* 17 and 18 are still empty */
+
 /**************** MAPS *************************/
 class map_t{
 private:

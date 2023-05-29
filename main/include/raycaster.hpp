@@ -19,11 +19,6 @@
 #include "ray.hpp"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /*********************** Raycaster *********************************/
 class level_t;
 
@@ -48,7 +43,3 @@ public:
 	~raycaster_t();
 	void draw(level_t* level);
 };
-
-#ifdef __cplusplus
-}
-#endif
