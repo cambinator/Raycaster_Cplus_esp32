@@ -1,111 +1,5 @@
 #include "game_play.hpp"
 
-/*************** LEVEL ****************/
-
-void level_t::load(uint8_t lev, texture_t** txtrs)
-{
-	curr_level = lev;
-	printf("load level %u\n", curr_level);
-	textures = txtrs;
-	switch(curr_level){
-		case 1:			
-			map = new map_t(map1, map1_width, map1_height);
-			break;
-		case 2:
-			map = new map_t(map2, map2_width, map2_height);
-			break;
-		case 3:
-			map = new map_t(map3, map3_width, map3_height);
-			break;
-		case 4:
-			map = new map_t(map4, map4_width, map4_height);
-			break;
-		case 5:
-			map = new map_t(map5, map5_width, map5_height);
-			break;
-		default:
-			map = new map_t(map1, map1_width, map1_height);
-			break;
-	}
-	objects = new list_t;
-	doors = new list_t;
-	for (uint16_t j = 0; j != map->height(); j++){
-		for (uint16_t i = 0; i!= map->width(); i++){
-			switch(map->get_index(i, j)){
-				case ZOMBIE : {
-					dynamic_t* temp = new dynamic_t(textures[8], {(i + 0.55f), (j + 0.45f)}, {0.03f, 0.01f}, 0, ZOMBIE);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case SCORP: {
-					dynamic_t* temp = new dynamic_t(textures[9], {(i + 0.55f), (j + 0.45f)}, {0.05f, 0.05f}, 0, SCORP);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case BOSS: {
-					dynamic_t* temp = new dynamic_t(textures[15], {(i + 0.55f), (j + 0.45f)}, {0.05f, 0.05f}, 0, BOSS);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case HEALTH: {
-					static_t* temp = new static_t(textures[10], {(i + 0.5f), (j + 0.5f)}, HEALTH);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case AMMO: {
-					static_t* temp = new static_t(textures[12], {(i + 0.5f), (j + 0.5f)}, AMMO);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case BARREL: {
-					static_t* temp = new static_t(textures[13], {(i + 0.5f), (j + 0.5f)}, BARREL);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case LAMP: {
-					static_t* temp = new static_t(textures[14], {(i + 0.5f), (j + 0.5f)}, LAMP);
-					objects->push_back((void*)temp);
-					break;
-				}
-				case DOOR_H:
-				case DOOR_V: {
-					door_t* temp = new door_t(i, j);
-					doors->push_back((void*)temp);
-					break;
-				}
-				default:
-					break;
-			}
-		}
-	}	
-}
-
-void level_t::destroy()
-{
-	for(auto iter = objects->begin(); iter != objects->end(); ++iter){
-		game_object_t* object = (game_object_t*)*iter;
-		delete object;
-	}
-	delete objects;
-	
-	for(auto iter = doors->begin(); iter != doors->end(); ++iter){
-		door_t* door = (door_t*)*iter;
-		delete door;
-	}
-	delete doors;
-
-	delete map;
-}
-
-uint8_t level_t::next_level() const
-{
-	if (curr_level >= NUM_LEVELS){
-		return 0;
-	}
-    return (curr_level + 1);
-}
-
-
 /**************** GAME ********************/
 game_t::game_t(device_tft device, uint8_t start_map_index)
 {
@@ -123,6 +17,34 @@ game_t::game_t(device_tft device, uint8_t start_map_index)
 	vSet_Font_Transparency(1);    
 	/* raycaster instance */
 	raycaster = new raycaster_t(tft, lcd_width, lcd_height, player);
+}
+
+void game_t::scene_update()
+{
+	player->update();
+	//distance update is handled in raycaster and move func
+	bool check_enemy_near = false;
+	for (auto iter = level->objects->begin(); iter != level->objects->end(); ++iter){
+		game_object_t* obj = (game_object_t*)*iter;
+		obj->update_distance(player);
+		obj->on_interact(player);
+		if (obj->update(level->map, level->objects, player)){
+			player->gain_score(1);
+		}
+		if (obj->distance() < 2* player->radius() && (!obj->is_friendly()) ){
+			check_enemy_near = true;
+		}
+	}
+	if (check_enemy_near){
+		player->set_weapon(player_t::eWeapon::KNIFE);
+	} else {
+		player->set_weapon(player_t::eWeapon::GUN);
+	}
+
+	for (auto iter = level->doors->begin(); iter != level->doors->end(); ++iter){
+		door_t* door = (door_t*)*iter;
+		door->update();
+	}	
 }
 
 uint8_t game_t::loop()
@@ -188,7 +110,7 @@ uint8_t game_t::loop()
 			accumulator = 0;		
 		}			
 		/* main interaction */
-		game_scene_update(player, level->map, level->objects, level->doors);
+		scene_update();
 		
 		/* cleaning dead objects */
 		game_object_t::clean_objects_list(level->objects);

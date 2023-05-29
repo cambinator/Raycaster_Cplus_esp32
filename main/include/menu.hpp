@@ -5,7 +5,7 @@
 #include <string.h>
 #include "simple_button.hpp"
 #include "Lcd_Simple_Driver.h"
-#include "Lcd_Simple_Grafics.h"
+#include "Lcd_Simple_Graphics.h"
 #include "objects.hpp"
 
 #ifdef __cplusplus

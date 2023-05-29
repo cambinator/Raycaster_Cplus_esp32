@@ -1,5 +1,5 @@
 /* version 2.0.05.11 */
-#include "Lcd_Simple_Grafics.h"
+#include "Lcd_Simple_Graphics.h"
 
 #define SWAP(a, b) { typeof(a) t = (a); (a) = (b); (b) = (t); }
 

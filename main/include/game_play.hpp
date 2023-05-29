@@ -7,36 +7,16 @@
 #include "freertos/task.h"
 
 #include "Lcd_Simple_Driver.h"
-#include "Lcd_Simple_Grafics.h"
+#include "Lcd_Simple_Graphics.h"
 
 #include "simple_button.hpp"
 #include "my_list.hpp"
 #include "objects.hpp"
 #include "raycaster.hpp"
 #include "menu.hpp"
-
-
-#define NUM_LEVELS 5
-
-extern const uint8_t map1_width;
-extern const uint8_t map1_height;
-extern const uint8_t map1[];
-
-extern const uint8_t map2_width;
-extern const uint8_t map2_height;
-extern const uint8_t map2[];
-
-extern const uint8_t map3_width;
-extern const uint8_t map3_height;
-extern const uint8_t map3[];
-
-extern const uint8_t map4_width;
-extern const uint8_t map4_height;
-extern const uint8_t map4[];
-
-extern const uint8_t map5_width;
-extern const uint8_t map5_height;
-extern const uint8_t map5[];
+#include "level.hpp"
+#include "textures.hpp"
+#include "player.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,25 +29,6 @@ extern button button_4;  /* rotate left */
 extern button button_5;  /* shoot / choose game */
 extern button button_6;  /* rotate right */
 
-class raycaster_t;
-
-class level_t{
-public:
-	map_t* map;
-	list_t* objects;
-	list_t* doors;
-	texture_t** textures;
-private:
-	uint8_t curr_level;
-public:
-	level_t() : map(nullptr), objects(nullptr), doors(nullptr), textures(nullptr), curr_level(1) {}
-	~level_t() { }
-	void load(uint8_t lev, texture_t** txtrs);
-	void destroy();
-	uint8_t next_level() const;
-};
-
-
 class game_t{
 private:
 	player_t* player;
@@ -76,6 +37,8 @@ private:
 	raycaster_t* raycaster;	
 	device_tft tft;
 	const int ms = 50;				/* frame time */
+private:
+	void scene_update();
 public:
 	explicit game_t(device_tft tft, uint8_t index = 1);
 	~game_t() {}
