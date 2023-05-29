@@ -6,7 +6,6 @@
 #include "Lcd_Simple_Grafics.h"
 #include "types.hpp"
 #include "my_list.hpp"
-//#include "raycaster.hpp"
 
 enum eObjType : uint8_t {ZOMBIE = 1, SCORP = 2, HEALTH = 3, AMMO = 4, BARREL = 5, LAMP = 6, BOSS = 7, PORTAL = 8,
 	SOLID_START = 9, SOLID_END = 14, DOOR_V = 15, DOOR_H = 16, BULLET = 17, KNIFE_S = 18, FOG = 19, DARK = 20}; 
@@ -187,6 +186,9 @@ private:
 	int8_t _pistol_shift = 1;
 public:
 	image_t* images[COUNT];
+private:
+	bool check_objects_collision(list_t* obj_list);
+	bool check_doors_open(list_t* doors);
 public:
 	player_t();
 	~player_t();
@@ -360,6 +362,10 @@ public:
 	{
 		return _sprite;
 	}
+	bool is_drawable() const
+	{
+		return _sprite->texture() != nullptr;
+	}
 	void update_distance(player_t* player);
 	static bool compare_distances(void* a, void* b);
 	static void clean_objects_list(list_t* objects_list);
@@ -374,6 +380,8 @@ class dynamic_t : public game_object_t{
 private:
 	vector_float_t _velocity; 
 	uint8_t _timer = 0;
+private:
+	int8_t map_collision(map_t* map);
 public:
 	dynamic_t(texture_t* texture, vector_float_t position, vector_float_t velocity, int v_shift, eObjType type);
 	~dynamic_t()

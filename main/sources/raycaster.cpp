@@ -296,7 +296,7 @@ void raycaster_t::draw_objects(list_t *objects)
 
 	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
 		game_object_t* obj = (game_object_t*)*iter;
-		if (obj->sprite()->texture() != nullptr){
+		if (obj->is_drawable()){
 			float rel_pos_x = obj->position().x - player->position().x;
 			float rel_pos_y = obj->position().y - player->position().y;
 			float transform_x = inv_determinant * (player->direction().y * rel_pos_x - player->direction().x * rel_pos_y);

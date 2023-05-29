@@ -297,6 +297,38 @@ int player_t::change_health(int level)
 	}
 	return res;
 }
+
+bool player_t::check_objects_collision(list_t *objects)
+{
+    for (auto iter = objects->begin(); iter != objects->end(); ++iter){
+		game_object_t* obj = (game_object_t*)*iter;
+		if (obj->diameter() > 0.0f && obj->distance() < 2.0f){		
+			obj->update_distance(this);
+			if (obj->distance() < obj->diameter()){
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool player_t::check_doors_open(list_t *doors)
+{
+	bool door_open = false;	
+	for (auto iter = doors->begin(); iter != doors->end(); ++iter){
+		door_t* door = (door_t*)*iter;
+		if (door->position().x == (uint16_t)_position.x && door->position().y == (uint16_t)_position.y){
+			if (door->state() == door_t::eState::OPEN){
+				door_open = true;
+			} else {
+				door->open();
+			}
+			return door_open;
+		}
+	}	
+    return false;
+}
+
 uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 {
 	/* function checks independently movement in x and y direction to produce nicer, gliding movement around obstacles */
@@ -308,61 +340,36 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 	_position.x += dx;       
 	current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);	
 	/* check if on door tile */
-	uint8_t door_opened = 0;	
-	for (auto iter = doors->begin(); iter != doors->end(); ++iter){
-		door_t* door = (door_t*)*iter;
-		if (door->position().x == (uint16_t)_position.x && door->position().y == (uint16_t)_position.y){
-			if (door->state() == door_t::eState::OPEN){
-				door_opened = 1;
-			} else {
-				door->open();
-			}
-			break;
-		}
-	}		
-	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !door_opened)){
+
+	bool opened_door = false;
+	if (map_t::is_door(current_tile)){
+		opened_door = check_doors_open(doors);
+	}
+
+	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.x -= dx;
 	}	
 	/* check for solid objects (solid objects have obj->width > 0) */
-	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
-		game_object_t* obj = (game_object_t*)*iter;
-		if (obj->diameter() > 0.0f && obj->distance() < 2.0f){		
-			obj->update_distance(this);
-			if (obj->distance() < obj->diameter()){
-				_position.x -= dx;
-			}
-		}
-	}	
+	if (check_objects_collision(objects)){
+		_position.x -= dx;
+	}
 
 	/* move in y direction */
 	_position.y += dy;  	
 	current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);
-	/* check if on door tile */
-	door_opened = 0;	
-	for (auto iter = doors->begin(); iter != doors->end(); ++iter){
-		door_t* door = (door_t*)*iter;
-		if (door->position().x == (uint16_t)_position.x && door->position().y == (uint16_t)_position.y){
-			if (door->state() == door_t::eState::OPEN){
-				door_opened = 1;
-			} else {
-				door->open();
-			}
-			break;
-		}
-	}	
-	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !door_opened)){
+	/* check if on door tile */	
+	opened_door = false;
+	if (map_t::is_door(current_tile)){
+		opened_door = check_doors_open(doors);
+	}
+
+	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.y -= dy;
 	}	
     /* check for solid objects (solid objects have obj->width > 0) */
-	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
-		game_object_t* obj = (game_object_t*)*iter;
-		if (obj->diameter() > 0.0f && obj->distance() < 2.0f){		
-			obj->update_distance(this);
-			if (obj->distance() < obj->diameter()){
-				_position.y -= dy;
-			}
-		}
-	}	
+	if (check_objects_collision(objects)){
+		_position.y -= dy;
+	}
 	if (current_tile == PORTAL){		
 		/* next level */
 		_position = PLAYER_START_POS;
@@ -387,16 +394,10 @@ uint8_t player_t::move_side(map_t* map, list_t* objects, eDirection dir)
 		_position.x += dx;
 		_position.y -= dy;
 	}	
-	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
-		game_object_t* obj = (game_object_t*)*iter;
-		if (obj->diameter() > 0.0f && obj->distance() < 2.0f){		
-			obj->update_distance(this);
-			if (obj->distance() < obj->diameter()){
-				_position.x += dx;
-				_position.y -= dy;
-			}
-		}
-	}	
+	if (check_objects_collision(objects)){
+		_position.x += dx;
+		_position.y -= dy;		
+	}
 	if (current_tile == PORTAL){
 		/* next level */
 		_position = PLAYER_START_POS;
@@ -418,6 +419,7 @@ void player_t::turn(eDirection dir)
 	_cam_vector.x = _cam_vector.x * cosf(vel) - _cam_vector.y * sinf(vel);
 	_cam_vector.y = old_cam_vector.x * sinf(vel) + _cam_vector.y * cosf(vel);
 }
+
 void player_t::shoot(list_t *obj_list, texture_t* textures[])
 {
 	if (_ammo){
@@ -427,11 +429,13 @@ void player_t::shoot(list_t *obj_list, texture_t* textures[])
 		obj_list->push_back((void*)bullet);	
 	}
 }
+
 void player_t::knife_attack(list_t *obj_list)
 {
 	dynamic_t* knife_sphere = new dynamic_t(nullptr, _position, {0, 0}, 0, KNIFE_S);
 	obj_list->push_back((void*)knife_sphere);	
 }
+
 void player_t::attack(list_t *obj_list, texture_t *textures[])
 {
 	_action = eAction::ATTACK;
@@ -504,6 +508,25 @@ void game_object_t::clean_objects_list(list_t *objects)
 	}
 }
 
+int8_t dynamic_t::map_collision(map_t *map)
+{
+    int obj_x_h = floorf(_position.x + _diameter);  
+	int obj_x_l = floorf(_position.x - _diameter);
+	int obj_y_h = floorf(_position.y + _diameter);
+	int obj_y_l = floorf(_position.y - _diameter);
+	if (obj_x_l < 0 || obj_x_h >= map->width() || obj_y_l < 0 || obj_y_h >= map->height()){
+		return -1;
+	}
+	if (map_t::is_solid(map->get_index(obj_x_h, obj_y_h)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_l)) || 
+		map_t::is_solid(map->get_index(obj_x_h, obj_y_l)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_h))){
+		if (_type == BULLET){
+			return -1;
+		} else {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /************ dynamic objects **************/
 dynamic_t::dynamic_t(texture_t *texture, vector_float_t position, vector_float_t velocity, int v_shift, eObjType type):
@@ -555,46 +578,28 @@ int dynamic_t::update(map_t *map, list_t *objects, player_t* player)
 	}
 	/* move x */
 	_position.x += _velocity.x;
-	int obj_x_h = floorf(_position.x + _diameter);  
-	int obj_x_l = floorf(_position.x- _diameter);
-	int obj_y_h = floorf(_position.y + _diameter);
-	int obj_y_l = floorf(_position.y - _diameter);
-	if (obj_x_l < 0 || obj_x_h >= map->width()){
-		_to_remove = 1;
+	int8_t map_collision_result = map_collision(map);
+	if (map_collision_result == -1){
+		remove();
 		return 0;
-	}
-	if (map_t::is_solid(map->get_index(obj_x_h, obj_y_h)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_l)) || 
-		map_t::is_solid(map->get_index(obj_x_h, obj_y_l)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_h))){
-		if (_type == BULLET){
-			_to_remove = 1;
-			return 0;
-		} else {
-			_velocity.x = -_velocity.x;
-			_position.x += _velocity.x;
-			if (_type == SCORP){
-				_sprite->invert();
-			}
+	} else if (map_collision_result == 1){
+		_velocity.x = -_velocity.x;
+		_position.x += _velocity.x;
+		if (_type == SCORP){
+			_sprite->invert();
 		}
-	}	
+	}
 	/* move y */
 	_position.y += _velocity.y;
-	obj_y_h = floorf(_position.y + _diameter);
-	obj_y_l = floorf(_position.y - _diameter);
-	if (obj_y_l < 0 || obj_y_h >= map->height()){
-		_to_remove = 1;
+	map_collision_result = map_collision(map);
+	if (map_collision_result == -1){
+		remove();
 		return 0;
+	} else if (map_collision_result == 1){
+		_velocity.y = -_velocity.y;
+		_position.y += _velocity.y;
 	}
-	if (map_t::is_solid(map->get_index(obj_x_h, obj_y_h)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_l)) || 
-		map_t::is_solid(map->get_index(obj_x_h, obj_y_l)) || map_t::is_solid(map->get_index(obj_x_l, obj_y_h))){
-		if (_type == BULLET){
-			_to_remove = 1;
-			return 0;
-		} else {
-			_velocity.y = -_velocity.y;
-			_position.y += _velocity.y;
-			//_inverted = !_inverted;
-		}
-	}
+
 	for (auto iter = objects->begin(); iter != objects->end(); ++iter){
 		game_object_t* next_object = (game_object_t*)*iter;
 		if (next_object != (game_object_t*)this){			
