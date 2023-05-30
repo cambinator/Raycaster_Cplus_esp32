@@ -1,9 +1,14 @@
 #include "level.hpp"
 
 /*************** LEVEL ****************/
+level_t::~level_t()
+{
+	destroy();
+}
 
 void level_t::load(uint8_t lev, texture_t** txtrs)
 {
+	destroy();				/* destroy previous level, if exists */
 	curr_level = lev;
 	printf("load level %u\n", curr_level);
 	textures = txtrs;
@@ -63,19 +68,21 @@ void level_t::load(uint8_t lev, texture_t** txtrs)
 
 void level_t::destroy()
 {
-	for(auto iter = objects->begin(); iter != objects->end(); ++iter){
-		game_object_t* object = (game_object_t*)*iter;
-		delete object;
-	}
-	delete objects;
-	
-	for(auto iter = doors->begin(); iter != doors->end(); ++iter){
-		door_t* door = (door_t*)*iter;
-		delete door;
-	}
-	delete doors;
+	if (map != nullptr){
+		for(auto iter = objects->begin(); iter != objects->end(); ++iter){
+			game_object_t* object = (game_object_t*)*iter;
+			delete object;
+		}
+		delete objects;
+		
+		for(auto iter = doors->begin(); iter != doors->end(); ++iter){
+			door_t* door = (door_t*)*iter;
+			delete door;
+		}
+		delete doors;
 
-	delete map;
+		delete map;
+	}
 }
 
 uint8_t level_t::next_level() const

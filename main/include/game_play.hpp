@@ -25,6 +25,7 @@ extern button button_4;  /* rotate left */
 extern button button_5;  /* shoot / choose game */
 extern button button_6;  /* rotate right */
 
+/* handles main game loop and actions order */
 class game_t{
 private:
 	player_t* player;

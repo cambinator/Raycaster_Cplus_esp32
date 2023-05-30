@@ -4,6 +4,7 @@
 #include "textures.hpp"
 
 /********* sprite **********/
+/* stores a scaled and adjusted texture of game objects*/
 class sprite_t{
 public:
 	enum eSize : uint8_t {SMALL, NORMAL, BIG};

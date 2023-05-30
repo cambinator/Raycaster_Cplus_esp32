@@ -29,22 +29,24 @@ void image_t::copy_to_buffer(color16_t* buff, uint8_t b_width, uint8_t b_height)
 		puts("Sprite_Copy_To_Buffer: image is too big");
 		return;
 	}
-	uint32_t row_width = width();
+	uint32_t row_width = width();				/* number of copied pixels in the row*/
 	uint32_t buf_ind = (_position.y * b_width + _position.x);		
 	for (uint8_t j = 0; j != height(); ++j){
 		row_width = width();
 		for (uint8_t i = 0; i != width(); ++i) {		
 			color16_t color = _texture->get_pixel(i, j);
-			if (!iCompare_Colors(&color, &cBLACK)){
+			if (!iCompare_Colors(&color, &cBLACK)){				/* cBLACK is transparent */
 				buff[buf_ind] = _texture->get_pixel(i, j);
 			}
 			buf_ind ++;
+			/* cropping the image in x axis if it is out of the frame */
 			if ((_position.x + i) >= b_width){
 				row_width = _position.x + i;
 				break;
 			}
 		}
 		buf_ind += (b_width - row_width);
+		/* cropping the image in y axis if it is out of the frame */
 		if (_position.y + j >= b_height){
 			break;
 		}

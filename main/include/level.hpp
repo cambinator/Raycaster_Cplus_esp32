@@ -6,6 +6,7 @@
 #include "map.hpp"
 #include "textures.hpp"
 
+/* stores all objects, related to the current level */
 class level_t{
 public:
 	map_t* map;
@@ -14,10 +15,11 @@ public:
 	texture_t** textures;
 private:
 	uint8_t curr_level;
+private:
+	void destroy();
 public:
 	level_t() : map(nullptr), objects(nullptr), doors(nullptr), textures(nullptr), curr_level(1) {}
-	~level_t() { }
+	~level_t();
 	void load(uint8_t lev, texture_t** txtrs);
-	void destroy();
-	uint8_t next_level() const;
+	uint8_t next_level() const;				/* returns next level id */
 };

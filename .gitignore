@@ -4,3 +4,4 @@
 /archive
 /build
 /spiffs_images/gen_esp32part.py
+/temp

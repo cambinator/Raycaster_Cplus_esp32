@@ -1,5 +1,5 @@
 set(SOURCES "main.cpp"
-	"source/map.cpp" "source/doors.cpp" "source/textures.cpp" "source/sprite.cpp"
+	"source/map.cpp" "source/doors.cpp" "source/textures.cpp"  "source/sprite.cpp"
         "source/images.cpp" "source/player.cpp" "source/objects.cpp" 
         "source/level.cpp" "source/game_play.cpp" "source/menu.cpp"  
         "source/ray.cpp" "source/raycaster.cpp"

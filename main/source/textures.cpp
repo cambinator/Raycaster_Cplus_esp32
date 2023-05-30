@@ -12,15 +12,16 @@ void texture_t::create_from_file(const char *fname)
 			printf("texture_t::create: cannot open file: %s\n", fname);
 			return;
 		}
+		/* reading a header, that contains width and height of hte image */
 		bytes_read = fread(img_size, 1, 2, file);
 		if (bytes_read != 2){
 			printf("texture_t::create: empty file %s\n", fname);
 		}
-		//printf("file %s sizes - width %u, height %u\n", fname, img_size[0], img_size[1]); /* debug */
 		_width = img_size[0];
 		_height = img_size[1];
 		uint32_t file_size = _width * _height * sizeof(color16_t);
 		_buffer = (color16_t*)heap_caps_malloc(file_size, MALLOC_CAP_DMA);
+		/* reading 16bit color array */
 		bytes_read = fread(_buffer, 1, file_size, file);
 		if (bytes_read != file_size){
 			printf("texture_t::create: wrong file or image side size - %d not %lu\n", bytes_read, file_size);
@@ -34,6 +35,7 @@ void texture_t::create_from_file(const char *fname)
 	fclose(file);
 }
 
+//to remake!!!!!!!!!
 color16_t texture_t::get_pixel(uint8_t x, uint8_t y) const
 {
 	return _buffer[y * _width + x];
@@ -41,6 +43,10 @@ color16_t texture_t::get_pixel(uint8_t x, uint8_t y) const
 
 color16_t texture_t::get_pixel_normalized(float xnorm, float ynorm) const
 {
+	/* getiing rid of the integer part allows to repeat texture */
+	xnorm -= floorf(xnorm);
+	ynorm -= floorf(ynorm);
+
 	uint8_t x = (uint8_t)(xnorm * _width);
 	uint8_t y = (uint8_t)(ynorm * _height);
 	return _buffer[y * _width + x];
