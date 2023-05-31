@@ -38,14 +38,16 @@ void texture_t::create_from_file(const char *fname)
 //to remake!!!!!!!!!
 color16_t texture_t::get_pixel(uint8_t x, uint8_t y) const
 {
+	//y &= (_height - 1);
+	//x &= (_width - 1);
 	return _buffer[y * _width + x];
 }
 
 color16_t texture_t::get_pixel_normalized(float xnorm, float ynorm) const
 {
-	/* getiing rid of the integer part allows to repeat texture */
-	xnorm -= floorf(xnorm);
-	ynorm -= floorf(ynorm);
+	///* getiing rid of the integer part allows to repeat texture */
+	//xnorm -= floorf(xnorm);
+	//ynorm -= floorf(ynorm);
 
 	uint8_t x = (uint8_t)(xnorm * _width);
 	uint8_t y = (uint8_t)(ynorm * _height);

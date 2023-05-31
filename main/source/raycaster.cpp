@@ -2,24 +2,39 @@
 
 /**************** Support functions *****************************/
 
-color16_t IRAM_ATTR Color_Shade(color16_t color)					/* makes color 2 times darker */
+/* makes a color 2 times darker */
+color16_t IRAM_ATTR Color_Shade(color16_t color)					
 {
-	color = (color << 8) | (color >>8); 					/* byte order is little endian, so pixel is stored gggbbbbb|rrrrrggg  */
-	color &= 0xF7DE;										/* to prevent overflow */			
+	/* byte order is little endian, so pixel is stored as 'gggbbbbb|rrrrrggg' */
+
+	/* firstly change the byte order*/
+	color = (color << 8) | (color >>8);		
+
+	/* applying a mask to prevent a color shift after the division */
+	color &= 0xF7DE;											
 	color /= 2;
+
+	/* reverse the byte order again */
 	color = (color << 8) | (color >>8); 
+	
 	return color;
 }
 
-color16_t IRAM_ATTR Color_Darker(color16_t color, int step)  /* makes 1 bit darker, works for grey colors */
+/* makes a color 1 bit darker, works for grey colors */
+color16_t IRAM_ATTR Color_Darker(color16_t color, int step)  
 {	
 	color16_t new_col = (color << 8) | (color >>8); 
-	new_col -= 0x0841 * step;
+
+	/* 0x0841 provides minimal brightness step for a 16bit color */
+	new_col -= 0x0841 * step;			
+
 	color = (new_col << 8) | (new_col >>8); 
+
 	return color;
 }
 
-color16_t IRAM_ATTR Color_Brighter(color16_t color, int step)  /* makes 1 bit lighter, works for grey colors */
+/* makes a color 1 bit brighter, works for grey colors */
+color16_t IRAM_ATTR Color_Brighter(color16_t color, int step)  
 {
 	if (step){
 		color16_t new_col = (color << 8) | (color >>8); 
@@ -37,6 +52,18 @@ color16_t IRAM_ATTR Color_Mix(color16_t color_a, color16_t color_b)
 	color_b = (color_b & 0xF79E) / 2;
 	color16_t res = color_a + color_b;
 	return ((res << 8) | (res >>8));
+}
+
+color16_t IRAM_ATTR Blue_Gradient(int step)
+{
+	//'gggbbbbb|rrrrrggg'
+	return (0x0100 * (step & 0x1F));
+}
+
+color16_t IRAM_ATTR Red_Gradient(int step)
+{
+	//'gggbbbbb|rrrrrggg'
+	return (0x0008 * (step & 0x1F));
 }
 
 
@@ -64,9 +91,11 @@ void raycaster_t::fill_background()
 	//ceiling
 	int adj = (int)player->height() / 32;
 	color16_t curr_color = Color_Brighter(cLIGHTGREY, adj / 2);
+	#ifdef LIGHT_EFFECTS
 	if (player_tile == FOG || player_tile == LAMP){
 		curr_color = Color_Mix(curr_color, cWHITE);
 	}
+	#endif
 	for (int i = 0; i < ((screen_height + 2 * pitch) * screen_width) / 2; i ++){
 		screen_buffer[i] = curr_color;
 		if (i % (screen_width * 4) == 0){
@@ -75,11 +104,13 @@ void raycaster_t::fill_background()
 	}
 	//floor
 	curr_color = cDARKGREY;
+	#ifdef LIGHT_EFFECTS
 	if (player_tile == FOG || player_tile == LAMP){
 		curr_color = Color_Mix(curr_color, cLIGHTGREY);
 	} else if (player_tile == DARK){
 		curr_color = cBLACK;
 	}
+	#endif
 	for (int i = ((screen_height + 2 * pitch) * screen_width) / 2; i < (screen_height * screen_width); i ++){
 		screen_buffer[i] = curr_color;
 		if (i % (screen_width * 4) == 0){
@@ -93,7 +124,7 @@ void raycaster_t::fill_background()
 
 void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 {
-	for(int x = 0; x != screen_width; x++){
+	for(int x = 0; x < screen_width; x++){
 		/************ casting a ray ************************/
 		float camera_x = 2.0f * x / (float)(screen_width) - 1.0f;
 		ray_t ray(player, camera_x);
@@ -102,13 +133,17 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 		z_buffer[x] = dist_to_wall;
 				
 		/********** calculating wall height ***************/		
-		float line_hight = (screen_height / (float) dist_to_wall);
-		float camera_height = (float)pitch + (player->height() / dist_to_wall);
-		int ceiling = (float)(screen_height / 2) - line_hight + camera_height;
+		const float int_shift = 65536.f;				//2 ^ 16
+		uint32_t shifted_dist_to_wall = (uint32_t)(dist_to_wall * int_shift);
+
+		
+		uint32_t line_hight = ( (screen_height << 16) / shifted_dist_to_wall);
+		uint32_t camera_height = pitch + ((uint32_t(player->height())<<16) / shifted_dist_to_wall);
+		int ceiling = (screen_height / 2) - line_hight + camera_height;
 		if (ceiling < 0){
 			ceiling = 0;
 		}
-		int flor = screen_height - ceiling + 2 * (camera_height);
+		int flor = screen_height - ceiling + 2 * camera_height;
 		if (flor > screen_height){
 			flor = screen_height;
 		}				
@@ -132,42 +167,44 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 		wall_x -= floor(wall_x);
 		
 		/* sampling texture - getting texture x coordinate,  */
-		int tex_x = (int)((wall_x - ray.texture_shift()) * (float)tex_width);
+		int tex_x = (int)((wall_x - ray.texture_shift()) * tex_width);
 		if (ray.side() == 0 && ray.get_direction().x > 0){
 			tex_x = tex_width - tex_x - 1;
 		}
 		if (ray.side() == 1 && ray.get_direction().y < 0){
 			tex_x = tex_width - tex_x - 1;
 		}			
-		float step = 1.0f * tex_height / (float)line_hight;
+		uint32_t step = (tex_height << 16) / (line_hight < 1 ? 1 : line_hight);
 		/*  Starting texture y coordinate */
-		float tex_pos = (float)(ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
+		uint32_t tex_pos = (ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
 		
 		/************** drawing to buffer ****************/
 		int ptr = (ceiling * screen_width + x % screen_width);
 
 		for (int i = ceiling; i < flor; i++){
-			int tex_y = (int)tex_pos & (tex_height - 1);
+			uint32_t tex_y = (tex_pos >> 16) & (tex_height - 1);
 			tex_pos += step;	
 			color16_t curr_color = textures[tex_index]->get_pixel(tex_x, tex_y);
 			/* shading y side of the wall */
 			if (ray.side() == 1){
 				curr_color = Color_Shade(curr_color);
 			}
+			#ifdef LIGHT_EFFECTS
 			if (player_tile == FOG || player_tile == LAMP){
 				curr_color = Color_Mix(curr_color, cWHITE);
 			} else if (player_tile == DARK){
 				curr_color = Color_Mix(curr_color, cBLACK);
 			}
+			#endif
 			screen_buffer[ptr] = curr_color;
 			ptr += screen_width;
-		}				
+		}
 	}
 }
 
 void raycaster_t::draw_objects(list_t *objects)
 {
-	/* calculatin determinant of inverse matrix, can be moved out of function, called when player moves; */
+	/* calculating the determinant of the inverse matrix */
 	float inv_determinant = 1.0f / (player->camera_vec().x * player->direction().y - 
 									player->camera_vec().y * player->direction().x);	
 	objects->bubble_sort(game_object_t::compare_distances);				/* from further to closer */
@@ -199,7 +236,7 @@ void raycaster_t::draw_objects(list_t *objects)
 			if(draw_end_x >= screen_width) {
 				draw_end_x = screen_width - 1;
 			}
-			/* adding health bar */
+			/* adding a health bar */
 			int health_bar = 0;
 			if((!obj->is_friendly()) && (obj->health() != obj->max_health())){
 				health_bar = (obj->health() * obj->sprite()->texture()->width()) / obj->max_health();
@@ -228,11 +265,13 @@ void raycaster_t::draw_objects(list_t *objects)
 							if (obj->sprite()->is_transparent()){
 								obj_color = Color_Mix(screen_buffer[buf_ptr], obj_color);
 							} 
+							#ifdef LIGHT_EFFECTS
 							if (player_tile == FOG || player_tile == LAMP){
 								obj_color = Color_Mix(obj_color, cWHITE);
 							} else if (player_tile == DARK){
 								obj_color = Color_Mix(obj_color, cBLACK);
 							}
+							#endif
 							screen_buffer[buf_ptr] = obj_color;
 						}
 						buf_ptr += screen_width;

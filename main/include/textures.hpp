@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Lcd_Simple_Driver.h"
 #include "Lcd_Simple_Graphics.h"
 #include "types.hpp"

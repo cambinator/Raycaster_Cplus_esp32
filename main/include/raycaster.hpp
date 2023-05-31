@@ -18,7 +18,7 @@
 #include "level.hpp"
 #include "ray.hpp"
 
-
+//#define LIGHT_EFFECTS				//enable light effects: fog, darkness
 /*********************** Raycaster *********************************/
 class level_t;
 

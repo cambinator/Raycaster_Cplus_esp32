@@ -2,7 +2,7 @@
 
 /****************** PLAYER *******************/
 player_t::player_t() : 	_dir_vector(PLAYER_START_DIR), _cam_vector(CAM_START_DIR), _position(PLAYER_START_POS),
-	_radius(0.5f), angle_velocity(0.1f), velocity(0.1f), _height(0.0f), _health(MAX_PLAYER_HEALTH), _score(0),
+	_radius(0.2f), angle_velocity(0.1f), velocity(0.1f), _health(MAX_PLAYER_HEALTH), _score(0),  _height(0),
 	_ammo(20), _timer(0), _state(eState::GOOD), _action(eAction::STAY), _weapon(eWeapon::GUN), _pistol_shift(1)
 {
 	/* a picture of the gun in the center of the screen */
@@ -53,7 +53,7 @@ void player_t::update()
 		_state = eState::GOOD;
 	}
 	if (_height > 0){
-		_height -= 10.0f;
+		_height -= 10;
 	}
 	_timer++;
 	if (_timer > 2 && _action == eAction::ATTACK){
@@ -112,16 +112,31 @@ bool player_t::check_doors_open(list_t *doors)
     return false;
 }
 
+bool player_t::map_collision(map_t *map)
+{
+    int player_x_h = floorf(_position.x + _radius);  
+	int player_x_l = floorf(_position.x - _radius);
+	int player_y_h = floorf(_position.y + _radius);
+	int player_y_l = floorf(_position.y - _radius);
+	if (player_x_l < 0 || player_x_h >= map->width() || player_y_l < 0 || player_y_h >= map->height()){
+		return true;
+	}
+	if (map_t::is_solid(map->get_index(player_x_h, player_y_h)) || map_t::is_solid(map->get_index(player_x_l, player_y_l)) || 
+		map_t::is_solid(map->get_index(player_x_h, player_y_l)) || map_t::is_solid(map->get_index(player_x_l, player_y_h))){
+		return true;
+	}
+	return false;
+}
+
 uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 {
 	/* function checks independently movement in x and y direction to produce nicer, gliding movement around obstacles */
-	int current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);
 	float dx = _dir_vector.x * velocity;
 	float dy = _dir_vector.y * velocity;
 	
 	/* move in x direction */
 	_position.x += dx;       
-	current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);	
+	int current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);	
 	/* check if on door tile */
 
 	bool opened_door = false;
@@ -129,7 +144,7 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 		opened_door = check_doors_open(doors);
 	}
 
-	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !opened_door)){
+	if (map_collision(map) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.x -= dx;
 	}	
 	/* check for solid objects (solid objects have obj->width > 0) */
@@ -146,7 +161,7 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 		opened_door = check_doors_open(doors);
 	}
 
-	if (map_t::is_solid(current_tile) || (map_t::is_door(current_tile) && !opened_door)){
+	if (map_collision(map) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.y -= dy;
 	}	
     /* check for solid objects (solid objects have obj->width > 0) */
@@ -173,7 +188,7 @@ uint8_t player_t::move_side(map_t* map, list_t* objects, eDirection dir)
 	_position.x -= dx;
 	_position.y += dy;
 	int current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);
-	if (map_t::is_solid(current_tile) || map_t::is_door(current_tile)){
+	if (map_collision(map) || map_t::is_door(current_tile)){
 		_position.x += dx;
 		_position.y -= dy;
 	}	

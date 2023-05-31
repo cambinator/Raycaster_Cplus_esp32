@@ -28,9 +28,9 @@ private:
 	const float _radius;
 	const float angle_velocity;
 	const float velocity;
-	float _height;
 	int16_t _health;
 	uint16_t _score;
+	uint8_t _height;
 	uint8_t _ammo;
 	uint8_t _timer;	
 	eState _state;
@@ -42,6 +42,7 @@ public:
 private:
 	bool check_objects_collision(list_t* obj_list);
 	bool check_doors_open(list_t* doors);
+	bool map_collision(map_t *map);
 public:
 	player_t();
 	~player_t();
@@ -61,13 +62,13 @@ public:
 	{
 		return _radius;
 	}
-	float height() const
+	uint8_t height() const
 	{
 		return _height;
 	}
 	void jump()
 	{
-		_height = 100.0f;
+		_height = 100;
 	}
 	uint16_t score() const
 	{
