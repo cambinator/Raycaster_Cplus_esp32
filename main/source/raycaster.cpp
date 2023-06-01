@@ -88,7 +88,8 @@ void raycaster_t::display()
 
 void raycaster_t::fill_background()
 {
-	//ceiling
+	/********** ceiling *********/
+	/* the gradient of the background changes when camera changes its vertical position */
 	int adj = (int)player->height() / 32;
 	color16_t curr_color = Color_Brighter(cLIGHTGREY, adj / 2);
 	#ifdef LIGHT_EFFECTS
@@ -132,39 +133,46 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 		float dist_to_wall = ray.distance();
 		z_buffer[x] = dist_to_wall;
 				
-		/********** calculating wall height ***************/		
+		/********** calculating wall height ***************/	
+		/* using shifting left to avoid the float division and save the precision, */
+		/* when the distance to the wall is less than 1 */
+		/* this little trick saved 3-4 ms per frame */
+		/* esp32 is not very quick in floating point calculations */
 		const float int_shift = 65536.f;				//2 ^ 16
 		uint32_t shifted_dist_to_wall = (uint32_t)(dist_to_wall * int_shift);
 
-		
+		/* calculation of wall height depending on the distance to the wall */
 		uint32_t line_hight = ( (screen_height << 16) / shifted_dist_to_wall);
 		uint32_t camera_height = pitch + ((uint32_t(player->height())<<16) / shifted_dist_to_wall);
-		int ceiling = (screen_height / 2) - line_hight + camera_height;
-		if (ceiling < 0){
-			ceiling = 0;
+		int scr_ceiling = (screen_height / 2) - line_hight + camera_height;
+		if (scr_ceiling < 0){
+			scr_ceiling = 0;
 		}
-		int flor = screen_height - ceiling + 2 * camera_height;
-		if (flor > screen_height){
-			flor = screen_height;
+		int scr_floor = screen_height - scr_ceiling + 2 * camera_height;
+		if (scr_floor > screen_height){
+			scr_floor = screen_height;
 		}				
 		/***************** wall texturing ********************/
 		int tex_index = curr_tile - 8;
 		if (tex_index < 0) {
 			tex_index = 0;
 		}
-		if (tex_index > 7) {				/* doors have the same texture, #7 */
+
+		/* doors have the same texture, #7 */
+		if (tex_index > 7) {				
 			tex_index = 7;
 		}			
 		int tex_width = textures[tex_index]->width();
 		int tex_height = textures[tex_index]->height();
-		
-		float wall_x;						/* exact point on the cell, that was hit with the ray */
+
+		/* calculation of the exact point on the cell, that was hit with the ray */
+		float wall_x;						
 		if (ray.side() == 0){
 			wall_x = player->position().y + dist_to_wall * ray.get_direction().y;
 		} else {
 			wall_x = player->position().x + dist_to_wall * ray.get_direction().x;
 		}			
-		wall_x -= floor(wall_x);
+		wall_x -= floor(wall_x);			/* point is alway between 0 and 1 */
 		
 		/* sampling texture - getting texture x coordinate,  */
 		int tex_x = (int)((wall_x - ray.texture_shift()) * tex_width);
@@ -175,13 +183,13 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 			tex_x = tex_width - tex_x - 1;
 		}			
 		uint32_t step = (tex_height << 16) / (line_hight < 1 ? 1 : line_hight);
-		/*  Starting texture y coordinate */
-		uint32_t tex_pos = (ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
+		/* Starting texture y coordinate */
+		uint32_t tex_pos = (scr_ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
 		
 		/************** drawing to buffer ****************/
-		int ptr = (ceiling * screen_width + x % screen_width);
+		int ptr = (scr_ceiling * screen_width + x % screen_width);
 
-		for (int i = ceiling; i < flor; i++){
+		for (int i = scr_ceiling; i < scr_floor; i++){
 			uint32_t tex_y = (tex_pos >> 16) & (tex_height - 1);
 			tex_pos += step;	
 			color16_t curr_color = textures[tex_index]->get_pixel(tex_x, tex_y);
@@ -248,20 +256,16 @@ void raycaster_t::draw_objects(list_t *objects)
 				if (obj->sprite()->is_inverted()){
 					tex_x = obj->sprite()->texture()->width() - tex_x;
 				}
-				/* the conditions in the if are: */
-				/* 1) it's in front of camera plane so you don't see things behind you */
-				/* 2) it's on the screen (left) */
-				/* 3) it's on the screen (right) */
-				/* 4) ZBuffer, with perpendicular distance */
-				if(transform_y > 0 && x > 0 && x < screen_width && transform_y < z_buffer[x] && obj->distance() > 0.1 /* 0.4*/){ 
+				/* if the object is visible to us and is in front of other objects, and not to close to the camera */
+				if(transform_y > 0 && x > 0 && x < screen_width && transform_y < z_buffer[x] && obj->distance() > 0.1){ 
 					int buf_ptr = draw_start_y * screen_width + x;				
-					for(int y = draw_start_y; y < draw_end_y; y++) { 								/* for every pixel of the current x */
+					for(int y = draw_start_y; y < draw_end_y; y++) { 									/* for every pixel of the current x */
 						int d = (y - v_screen_shift) * 256 - screen_height * 128 + obj_height * 128;	/* 256 and 128 factors to avoid floats */
 						int tex_y = ((d * obj->sprite()->texture()->height()) / obj_height) / 256;
-						color16_t obj_color = obj->sprite()->texture()->get_pixel(tex_x, tex_y);				/* get current color from the texture */
-						if (tex_y == 0 && health_x < health_bar){									/* health bar */
+						color16_t obj_color = obj->sprite()->texture()->get_pixel(tex_x, tex_y);		/* getting the current pixel from the texture */
+						if (tex_y == 0 && health_x < health_bar){										/* a health bar on the top of the sprite */
 							screen_buffer[buf_ptr] = cRED;
-						} else if (!iCompare_Colors(&obj_color, &cBLACK)){							/*  cBLACK is considered transparent */
+						} else if (!iCompare_Colors(&obj_color, &cBLACK)){								/* cBLACK is considered transparent */
 							if (obj->sprite()->is_transparent()){
 								obj_color = Color_Mix(screen_buffer[buf_ptr], obj_color);
 							} 
@@ -275,10 +279,10 @@ void raycaster_t::draw_objects(list_t *objects)
 							screen_buffer[buf_ptr] = obj_color;
 						}
 						buf_ptr += screen_width;
-					}
-				}
-			}
-		}
+					}//end drawing vertical line
+				}	
+			}//end drawing an object
+		}//end object
 	}
 }
 
