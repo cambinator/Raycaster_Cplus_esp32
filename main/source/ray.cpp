@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "ray.hpp"
 
 /************** RAY ********************/
@@ -11,10 +16,12 @@ ray_t::ray_t(player_t *player, float camera_x) : direction({0, 0}), route({0, 0}
 		
 	map_index_x = (int)player->position().x;
 	map_index_y = (int)player->position().y;
-					
+		
+	/* setting delta x and y for ray casting*/
 	delta.x = (direction.x == 0) ? INFINITY_ : fabs(1.0f / direction.x);  
 	delta.y = (direction.y == 0) ? INFINITY_ : fabs(1.0f / direction.y);  
 		
+	/* choosing steps directions and the distance to the nearest x and y intersection */
 	if (direction.x < 0){
 		step_x = -1;
 		route.x = (player->position().x - (float)map_index_x) * delta.x;
@@ -31,33 +38,11 @@ ray_t::ray_t(player_t *player, float camera_x) : direction({0, 0}), route({0, 0}
 	}
 }
 
-float ray_t::distance() const
-{
-    float dist_to_wall = INFINITY_;
-	switch(wall_hit){
-		case 1: {			/* normal thick wall was hit */
-			if (side_hit == 0){
-				dist_to_wall = route.x - delta.x;
-			} else {
-				dist_to_wall = route.y - delta.y;
-			} 
-			break;
-		} 
-		case 2:				/* vertical thin wall was hit */
-			dist_to_wall = route.x - delta.x / 2.0f;
-			break;
-		case 3:				/* horisontal thin wall was hit */
-			dist_to_wall = route.y - delta.y / 2.0f;
-			break;
-		default:
-			break;
-	}	
-	return dist_to_wall;
-}
-
 uint8_t ray_t::cast(map_t *map, list_t* doors)
 {
 	uint8_t curr_tile = 0;
+	
+	/* DDA algorithm */
 	while(!wall_hit){
 		if (route.x < route.y){
 			route.x += delta.x;
@@ -75,9 +60,13 @@ uint8_t ray_t::cast(map_t *map, list_t* doors)
 		
 		if (curr_tile >= PORTAL && curr_tile <= SOLID_END)  {				/* thick wall hit */
 			wall_hit = 1;
-		} else if (curr_tile == DOOR_V){							/* vertical door hit */
+		/* a door tile was hit */
+		} else if (curr_tile == DOOR_V){				/* vertical door hit */
+			/* a door is thinner than a wall, it becomes visible in the center of the tile */
 			if (route.x - delta.x/2.0f > route.y){
 				continue;
+				
+			/* if a door was hit, searchig for the actual door */
 			} else {
 				float walx = start_pos.y + (route.x - delta.x/2.0f) * direction.y;
 				walx -= floorf(walx);
@@ -86,17 +75,20 @@ uint8_t ray_t::cast(map_t *map, list_t* doors)
 				for (auto iter = doors->begin(); iter != doors->end(); ++iter){
 					door = (door_t*)*iter;
 					if (door->position().x == map_index_x && door->position().y == map_index_y){
+						/* the door was found */
 						break;
 					}
 				}
 				if (door == nullptr){
+					/* error, no door object */
 					wall_hit = 4;
 				} else if ((uint8_t)walx < door->time()){
+					/* shifting door texture according to the current door state */
 					wall_hit = 2;
 					wall_texture_shift = (float)door->time() / (float)DOOR_TIMER_MAX;
 				}
 			}				
-		} else if (curr_tile == DOOR_H){						/* horizontal door hit */
+		} else if (curr_tile == DOOR_H){				/* horizontal door hit */					
 			if (route.y - delta.y / 2.0f > route.x){
 				continue;
 			} else {
@@ -120,4 +112,29 @@ uint8_t ray_t::cast(map_t *map, list_t* doors)
 		}
 	}
     return curr_tile;
+}
+
+/* this function is called after the ray hits a wall */
+float ray_t::distance() const
+{
+    float dist_to_wall = INFINITY_;
+	switch(wall_hit){
+		case 1: {			/* a normal thick wall was hit */
+			if (side_hit == 0){
+				dist_to_wall = route.x - delta.x;
+			} else {
+				dist_to_wall = route.y - delta.y;
+			} 
+			break;
+		} 
+		case 2:				/* a vertical thin wall was hit */
+			dist_to_wall = route.x - delta.x / 2.0f;
+			break;
+		case 3:				/* a horisontal thin wall was hit */
+			dist_to_wall = route.y - delta.y / 2.0f;
+			break;
+		default:
+			break;
+	}	
+	return dist_to_wall;
 }

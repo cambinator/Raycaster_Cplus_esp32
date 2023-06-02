@@ -1,15 +1,20 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "Lcd_Simple_Driver.h"
 #include "Lcd_Simple_Graphics.h"
 
 #include "my_list.hpp"
-#include "types.hpp"
 #include "objects.hpp"
 #include "map.hpp"
 #include "textures.hpp"

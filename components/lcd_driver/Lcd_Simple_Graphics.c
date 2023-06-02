@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2023 rubanyk
+ * 
+ * This software is released under the MIT License.
+ * https://opensource.org/licenses/MIT
+ */
+
 /* version 2.0.05.11 */
 #include "Lcd_Simple_Graphics.h"
 

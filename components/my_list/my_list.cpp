@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "my_list.hpp"
 
 void list_t::clear(){

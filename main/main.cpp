@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"

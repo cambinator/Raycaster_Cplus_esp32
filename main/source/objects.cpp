@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "objects.hpp"
 
 /* fast inverse square root, 1.5-2 times quicker on esp32 than sqrt */
@@ -54,6 +59,7 @@ void game_object_t::clean_objects_list(list_t *objects)
 
 int8_t dynamic_t::map_collision(map_t *map)
 {
+	/* inner collidable 'rectangle' of every object */
     int obj_x_h = floorf(_position.x + _diameter);  
 	int obj_x_l = floorf(_position.x - _diameter);
 	int obj_y_h = floorf(_position.y + _diameter);
@@ -77,6 +83,7 @@ int8_t dynamic_t::map_move(map_t* map){
 		return -1;
 	}
 	int8_t collision = 0;
+	
 	/* move x */
 	_position.x += _velocity.x;
 	int8_t map_collision_result = map_collision(map);
@@ -88,6 +95,7 @@ int8_t dynamic_t::map_move(map_t* map){
 		_position.x += _velocity.x;
 		collision = 1;
 	}
+	
 	/* move y */
 	_position.y += _velocity.y;
 	map_collision_result = map_collision(map);
@@ -126,7 +134,7 @@ int bullet_t::update(map_t* map, list_t* objects, player_t* player)
 			float y = fabs(_position.y - next_object->position().y);
 			float radius = _diameter + next_object->diameter();
 			if (x <= radius * 2 && y <= radius * 2){
-				if (next_object->collide(this)){
+				if (next_object->collide(this)){			/* another object was hit */
 					return 1;
 				}
 			}
@@ -151,13 +159,13 @@ int knife_t::update(map_t* map, list_t* objects, player_t* player)
 			float y = fabs(_position.y - next_object->position().y);
 			float radius = _diameter + next_object->diameter();
 			if (x <= radius * 2 && y <= radius * 2 && !_to_remove){
-				if (next_object->collide(this)){
+				if (next_object->collide(this)){			/* another object was hit */
 					return 1;
 				}
 			}
 		}			
 	}
-	if (_timer > 4){
+	if (_timer > 4){			/* exists only 4 cycles */
 		_timer = 0;
 		remove();
 	}
@@ -179,7 +187,7 @@ void enemy_t::collide_dynamic_objects(list_t *objects)
 			float y = fabs(_position.y - next_object->position().y);
 			float radius = _diameter + next_object->diameter();
 			if (x <= radius * 2 && y <= radius * 2){
-				if (next_object->diameter() > 0.2f){				/* passing through small objects.. */
+				if (next_object->diameter() > 0.2f){			/* passing through small objects.. */
 					_velocity.x = -_velocity.x;
 					_velocity.y = -_velocity.y;
 				}
@@ -190,8 +198,8 @@ void enemy_t::collide_dynamic_objects(list_t *objects)
 
 bool enemy_t::on_interact(player_t *player)
 {
-	if (_distance <_diameter + player->radius()){
-		player->change_health(-_damage);
+	if (_distance <_diameter + player->radius()){				/* player was hit */
+		player->change_health(-_damage);			
 		return true;
 	}
 	return false;
@@ -228,9 +236,10 @@ int zombie_t::update(map_t *map, list_t *objects, player_t* player)
 	_timer++;
 	if (_timer > 16){
 		_timer = 0;
-		_sprite->invert();
+		_sprite->invert();				/* illusion of walking */
 		const float chase_radius = 9.0f;
 		const float speed = 0.03f;
+		/* chase mode */
 		if (_distance < chase_radius && _distance > 0.1f){
 			float dx = player->position().x - _position.x;
 			float dy = player->position().y - _position.y;
@@ -274,6 +283,7 @@ int scorpio_t::update(map_t *map, list_t *objects, player_t* player)
 		_timer = 0;
 		const float chase_radius = 16.0f;
 		const float speed = 0.05f;
+		/* chase mode */
 		if (_distance < chase_radius && _distance > 0.1f){
 			float dx = player->position().x - _position.x;
 			float dy = player->position().y - _position.y;
@@ -319,6 +329,7 @@ int boss_t::update(map_t *map, list_t *objects, player_t* player)
 		_sprite->invert();
 		const float chase_radius = 6.0f;
 		const float speed = 0.05f;
+		/* chase mode */
 		if (_distance < chase_radius && _distance > 0.1f){
 			float dx = player->position().x - _position.x;
 			float dy = player->position().y - _position.y;

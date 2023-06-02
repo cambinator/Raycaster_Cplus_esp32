@@ -1,6 +1,11 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
 
-#include "types.hpp"
+#include <stdint.h>
 
 #define NUM_MAPS 5
 

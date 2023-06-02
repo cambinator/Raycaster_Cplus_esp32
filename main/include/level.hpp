@@ -1,6 +1,12 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
 
 #include <stdio.h>
+#include <stdint.h>
 #include "my_list.hpp"
 #include "objects.hpp"
 #include "map.hpp"

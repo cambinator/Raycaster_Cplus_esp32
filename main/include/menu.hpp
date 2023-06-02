@@ -1,8 +1,14 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "simple_button.hpp"
 #include "Lcd_Simple_Driver.h"
 #include "Lcd_Simple_Graphics.h"

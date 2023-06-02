@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "player.hpp"
 
 /****************** PLAYER *******************/
@@ -114,6 +119,7 @@ bool player_t::check_doors_open(list_t *doors)
 
 bool player_t::map_collision(map_t *map)
 {
+	/* player's collision rectangle */
     int player_x_h = floorf(_position.x + _radius);  
 	int player_x_l = floorf(_position.x - _radius);
 	int player_y_h = floorf(_position.y + _radius);
@@ -130,15 +136,15 @@ bool player_t::map_collision(map_t *map)
 
 uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 {
-	/* function checks independently movement in x and y direction to produce nicer, gliding movement around obstacles */
+	/* function checks independently a movement in x and y directions to produce a nicer, gliding movement around obstacles */
 	float dx = _dir_vector.x * velocity;
 	float dy = _dir_vector.y * velocity;
 	
 	/* move in x direction */
 	_position.x += dx;       
 	int current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);	
-	/* check if on door tile */
-
+	
+	/* check if on the door tile */
 	bool opened_door = false;
 	if (map_t::is_door(current_tile)){
 		opened_door = check_doors_open(doors);
@@ -147,7 +153,7 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 	if (map_collision(map) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.x -= dx;
 	}	
-	/* check for solid objects (solid objects have obj->width > 0) */
+	/* check solid objects collision (solid objects that have obj->width > 0) */
 	if (check_objects_collision(objects)){
 		_position.x -= dx;
 	}
@@ -155,7 +161,8 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 	/* move in y direction */
 	_position.y += dy;  	
 	current_tile = map->get_index((uint16_t)_position.x, (uint16_t)_position.y);
-	/* check if on door tile */	
+	
+	/* check if on the door tile */	
 	opened_door = false;
 	if (map_t::is_door(current_tile)){
 		opened_door = check_doors_open(doors);
@@ -164,7 +171,7 @@ uint8_t player_t::move_forward(map_t* map, list_t* objects, list_t* doors)
 	if (map_collision(map) || (map_t::is_door(current_tile) && !opened_door)){
 		_position.y -= dy;
 	}	
-    /* check for solid objects (solid objects have obj->width > 0) */
+    /* check solid objects collision */
 	if (check_objects_collision(objects)){
 		_position.y -= dy;
 	}

@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "map.hpp"
 
 uint8_t map_t::get_index(uint16_t x, uint16_t y) const

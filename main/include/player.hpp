@@ -1,4 +1,10 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
+#include <stdint.h>
 #include "types.hpp"
 #include "my_list.hpp"
 #include "map.hpp"
@@ -14,6 +20,7 @@ constexpr vector_float_t PLAYER_START_POS = {2.5f, 3.5f};
 constexpr vector_float_t PLAYER_START_DIR = {-1.0f, 0.0f};
 constexpr vector_float_t CAM_START_DIR = {0.0f, 0.66f};
 
+/* accumulates all properties of the player: camera, position, weapon, stats etc. */
 class player_t{
 public:
 	enum class eState : uint8_t {GOOD, DAMAGED, DEAD};
@@ -38,7 +45,7 @@ private:
 	eWeapon _weapon;
 	int8_t _pistol_shift;
 public:
-	image_t* images[COUNT];
+	image_t* images[COUNT];				/* gun, knife, blood sprites */
 private:
 	bool check_objects_collision(list_t* obj_list);
 	bool check_doors_open(list_t* doors);

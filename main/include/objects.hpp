@@ -1,6 +1,12 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #pragma once
 
 #include <math.h>
+#include <stdint.h>
 #include "esp_heap_caps.h"
 #include "types.hpp"
 #include "my_list.hpp"
@@ -14,6 +20,7 @@ class player_t;
 
 
 /*================ BASE =================*/
+/* all child classes are used together in a container of game_object_t's */
 class game_object_t{
 protected:
 	sprite_t* _sprite;
@@ -73,18 +80,29 @@ public:
 	{
 		return _sprite->texture() != nullptr;
 	}
+	/* updating the distance to the player in every cycle */
 	void update_distance(player_t* player);
+	
+	/* function for list_t::sort */
 	static bool compare_distances(void* a, void* b);
+	
+	/* cleaning all removed objects from the list */
 	static void clean_objects_list(list_t* objects_list);
+	
+	/* called every cycle to update object position */
 	virtual int update(map_t* map, list_t* objects, player_t* player) = 0;
+	
+	/* called when interaction with the player is detected */
 	virtual bool on_interact(player_t* player) = 0;
+	
+	/* called when an interaction with another object is detected */
 	virtual bool collide(game_object_t* obj) = 0;
 };
 
 
 
 /*==================== DYNAMIC OBJECTS ===========================*/
-
+/* dynamic objects can interact with other objects and change itself in time */
 class dynamic_t : public game_object_t{	
 protected:
 	vector_float_t _velocity; 
@@ -112,6 +130,7 @@ public:
 	bool collide(game_object_t* obj) override { return false; }
 };
 
+/* this objects casts damage to enemies, is not visible */
 class knife_t : public dynamic_t{
 public:
 	knife_t(texture_t* texture, vector_float_t position, vector_float_t velocity);
@@ -157,6 +176,7 @@ public:
 
 
 /*=================== STATIC OBJECTS ===========================*/
+/* static objects do not move and interact with other objects, however, they can interact with the player */
 class static_t : public game_object_t{
 public: 
 	static_t(texture_t* texture, vector_float_t position);

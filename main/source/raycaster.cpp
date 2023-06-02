@@ -1,3 +1,8 @@
+// Copyright (c) 2023 rubanyk
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "raycaster.hpp"
 
 /**************** Support functions *****************************/
@@ -133,7 +138,7 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 		float dist_to_wall = ray.distance();
 		z_buffer[x] = dist_to_wall;
 				
-		/********** calculating wall height ***************/	
+		/********** calculating wall height ***************/		
 		/* using shifting left to avoid the float division and save the precision, */
 		/* when the distance to the wall is less than 1 */
 		/* this little trick saved 3-4 ms per frame */
@@ -141,38 +146,36 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 		const float int_shift = 65536.f;				//2 ^ 16
 		uint32_t shifted_dist_to_wall = (uint32_t)(dist_to_wall * int_shift);
 
-		/* calculation of wall height depending on the distance to the wall */
+		/* calculation of the wall height depending on the distance to the wall */
 		uint32_t line_hight = ( (screen_height << 16) / shifted_dist_to_wall);
 		uint32_t camera_height = pitch + ((uint32_t(player->height())<<16) / shifted_dist_to_wall);
-		int scr_ceiling = (screen_height / 2) - line_hight + camera_height;
-		if (scr_ceiling < 0){
-			scr_ceiling = 0;
+		int wall_ceiling = (screen_height / 2) - line_hight + camera_height;
+		if (wall_ceiling < 0){
+			wall_ceiling = 0;
 		}
-		int scr_floor = screen_height - scr_ceiling + 2 * camera_height;
-		if (scr_floor > screen_height){
-			scr_floor = screen_height;
+		int wall_floor = screen_height - wall_ceiling + 2 * camera_height;
+		if (wall_floor > screen_height){
+			wall_floor = screen_height;
 		}				
 		/***************** wall texturing ********************/
 		int tex_index = curr_tile - 8;
 		if (tex_index < 0) {
 			tex_index = 0;
 		}
-
-		/* doors have the same texture, #7 */
-		if (tex_index > 7) {				
+		if (tex_index > 7) {				/* doors have the same texture, #7 */
 			tex_index = 7;
 		}			
 		int tex_width = textures[tex_index]->width();
 		int tex_height = textures[tex_index]->height();
-
+		
 		/* calculation of the exact point on the cell, that was hit with the ray */
-		float wall_x;						
+		float wall_x;					
 		if (ray.side() == 0){
 			wall_x = player->position().y + dist_to_wall * ray.get_direction().y;
 		} else {
 			wall_x = player->position().x + dist_to_wall * ray.get_direction().x;
 		}			
-		wall_x -= floor(wall_x);			/* point is alway between 0 and 1 */
+		wall_x -= floorf(wall_x);
 		
 		/* sampling texture - getting texture x coordinate,  */
 		int tex_x = (int)((wall_x - ray.texture_shift()) * tex_width);
@@ -183,13 +186,13 @@ void raycaster_t::draw_map(map_t *map, list_t *doors, texture_t *textures[])
 			tex_x = tex_width - tex_x - 1;
 		}			
 		uint32_t step = (tex_height << 16) / (line_hight < 1 ? 1 : line_hight);
-		/* Starting texture y coordinate */
-		uint32_t tex_pos = (scr_ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
+		/*  Starting texture y coordinate */
+		uint32_t tex_pos = (wall_ceiling - camera_height - screen_height / 2 + line_hight / 2) * step;		
 		
 		/************** drawing to buffer ****************/
-		int ptr = (scr_ceiling * screen_width + x % screen_width);
+		int ptr = (wall_ceiling * screen_width + x % screen_width);
 
-		for (int i = scr_ceiling; i < scr_floor; i++){
+		for (int i = wall_ceiling; i < wall_floor; i++){
 			uint32_t tex_y = (tex_pos >> 16) & (tex_height - 1);
 			tex_pos += step;	
 			color16_t curr_color = textures[tex_index]->get_pixel(tex_x, tex_y);
@@ -280,7 +283,7 @@ void raycaster_t::draw_objects(list_t *objects)
 						}
 						buf_ptr += screen_width;
 					}//end drawing vertical line
-				}	
+				}
 			}//end drawing an object
 		}//end object
 	}
