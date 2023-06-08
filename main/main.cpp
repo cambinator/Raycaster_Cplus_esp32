@@ -25,22 +25,24 @@
 
 #define FILE_PATH "/spiffs/images/"
 
-/* for TTGO LILYGO */
+
+/* for minimal usability buttons 2 and 6 must be set*/
+/* pin 0 and pin 35 are buttons on the TTGO board */
 const gpio_num_t BUTTON1PIN = GPIO_NUM_21;
-const gpio_num_t BUTTON2PIN = GPIO_NUM_22;
+const gpio_num_t BUTTON2PIN = GPIO_NUM_22;//GPIO_NUM_0;
 const gpio_num_t BUTTON3PIN = GPIO_NUM_17;
 const gpio_num_t BUTTON4PIN = GPIO_NUM_15;
 const gpio_num_t BUTTON5PIN = GPIO_NUM_13;
-const gpio_num_t BUTTON6PIN = GPIO_NUM_12;
+const gpio_num_t BUTTON6PIN = GPIO_NUM_12;//GPIO_NUM_35;
 
 /********** global variables ******************/
 
-button button_1; /*  move left / enter game */
-button button_2; /*  move forward/backward */
+button button_1; /*  move left */
+button button_2; /*  move forward/backward / enter game */
 button button_3; /*  move right */
 button button_4; /*  rotate left */
-button button_5; /*  shoot / choose game */
-button button_6; /*  rotate right */
+button button_5; /*  shoot */
+button button_6; /*  rotate right / choose game */
 
 
 static const char *TAG = "Raycaster";
