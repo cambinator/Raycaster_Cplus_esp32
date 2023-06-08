@@ -26,6 +26,19 @@
 #define FILE_PATH "/spiffs/images/"
 
 
+#ifdef CONFIG_WROOM
+
+/* for WROOM */
+const gpio_num_t BUTTON1PIN = GPIO_NUM_34;
+const gpio_num_t BUTTON2PIN = GPIO_NUM_35;
+const gpio_num_t BUTTON3PIN = GPIO_NUM_32;
+const gpio_num_t BUTTON4PIN = GPIO_NUM_33;
+const gpio_num_t BUTTON5PIN = GPIO_NUM_14;
+const gpio_num_t BUTTON6PIN = GPIO_NUM_12;
+
+#else
+
+/* for TTGO LILYGO */
 /* for minimal usability buttons 2 and 6 must be set*/
 /* pin 0 and pin 35 are buttons on the TTGO board */
 const gpio_num_t BUTTON1PIN = GPIO_NUM_21;
@@ -34,6 +47,8 @@ const gpio_num_t BUTTON3PIN = GPIO_NUM_17;
 const gpio_num_t BUTTON4PIN = GPIO_NUM_15;
 const gpio_num_t BUTTON5PIN = GPIO_NUM_13;
 const gpio_num_t BUTTON6PIN = GPIO_NUM_12;//GPIO_NUM_35;
+
+#endif
 
 /********** global variables ******************/
 
